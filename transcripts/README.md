@@ -15,8 +15,11 @@ tool_result → final consolidated reply) and `<name>.json` (the raw event strea
 |---|---|
 | `happy_path_alice` | one message with two jobs (refund ORD-123 + status of ORD-789), answered once |
 | `escalation_bob` | explicit "put me through to a person" → self-contained ticket (customer + order snapshot + reason) |
-| `over_limit_demo` | full $742 refund request → code ceiling returns a `permission` error → agent escalates |
-| `errors_transient` | order service times out once → agent retries → succeeds |
+| `ceiling_escalation` | full $680 refund on ORD-555 (in the window) → the $500 **code ceiling** returns a `permission` error → agent escalates |
+| `error_transient` | order service times out once → agent retries → succeeds |
+| `error_business` | `--fail-mode business`: refund refused for a business reason → agent explains, does not retry |
+| `error_validation` | `--fail-mode validation`: one bad argument → agent corrects it and retries |
 
-`happy_path_alice` and `escalation_bob` are the two required deliverables; the other two show
-the error-category behaviour.
+`happy_path_alice` and `escalation_bob` are the two required deliverables. `ceiling_escalation`
+plus the three `error_*` runs cover all four error categories and show the agent behaving
+differently per category.

@@ -103,14 +103,16 @@ pytest -q
 ## Transcripts
 
 `python scripts/capture_transcripts.py` runs the scenarios against the real API and writes
-`transcripts/*.md` + `.json`:
+`transcripts/*.md` + `.json` (committed copies are in [`transcripts/`](transcripts/)):
 
-- `happy_path_alice` — Alice, refund ORD-123 **and** status of ORD-789, answered in one reply.
-- `escalation_bob` — Bob explicitly asks for a human about ORD-456; the ticket carries his
-  details and an order snapshot.
-- `over_limit_demo` — Bob wants the full $742 back; the code ceiling returns a `permission`
-  error and the agent escalates.
-- `errors_transient` — the order service times out once; the agent retries and succeeds.
+| scenario | shows |
+|---|---|
+| `happy_path_alice` | one message, two jobs (refund ORD-123 + status of ORD-789), answered in a single reply |
+| `escalation_bob` | explicit "put me through to a person" → self-contained ticket (customer + order snapshot + reason) |
+| `ceiling_escalation` | `process_refund` $680 on ORD-555 → the **$500 code ceiling** returns a `permission` error → agent escalates, does not retry |
+| `error_transient` | order service times out once → agent retries → succeeds |
+| `error_business` | `--fail-mode business` → non-retryable, customer-facing explanation; no retry |
+| `error_validation` | `--fail-mode validation` → retryable → agent retries and the refund goes through |
 
 ## Noticing misrouting in production
 

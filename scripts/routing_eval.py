@@ -68,9 +68,9 @@ def main() -> int:
         print("set ANTHROPIC_API_KEY to run the routing eval", file=sys.stderr)
         return 2
 
-    import anthropic
+    from support_agent.client import make_client
 
-    client = anthropic.Anthropic()
+    client = make_client()
     hits = 0
     for message, verified, expected in PROBES:
         got = first_tool(client, message, verified)

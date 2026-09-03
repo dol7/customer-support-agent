@@ -227,8 +227,8 @@ class FailMode:
                 tool_name == "process_refund",
                 lambda: tool_error(
                     "business",
-                    "This order was delivered more than 30 days ago and is outside the "
-                    "return window, so it is not eligible for a refund.",
+                    "This order was paid entirely with store credit, which is "
+                    "non-refundable under our terms of sale.",
                 ),
             ),
             "permission": (

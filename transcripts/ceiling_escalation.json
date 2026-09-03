@@ -1,0 +1,244 @@
+{
+  "title": "Enforcement \u2014 $500 code ceiling fires, agent escalates (Bob, ORD-555, $680)",
+  "events": [
+    {
+      "kind": "user_message",
+      "data": {
+        "text": "Bob Carter here (bob.carter@example.com). The Ergonomic Task Chair from ORD-555 is faulty \u2014 the gas lift won't hold. I'd like a full refund please."
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "citations": null,
+            "text": "I'll verify your account first, then pull up that order.",
+            "type": "text"
+          },
+          {
+            "id": "toolu_01327vdK6fUuVwc6dn1ggGUX",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "full_name": "Bob Carter",
+              "email": "bob.carter@example.com",
+              "phone": null
+            },
+            "name": "get_customer",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "get_customer",
+        "input": {
+          "full_name": "Bob Carter",
+          "email": "bob.carter@example.com",
+          "phone": null
+        },
+        "result": {
+          "ok": true,
+          "customer_id": "CUST-1002",
+          "name": "Bob Carter",
+          "email": "bob.carter@example.com",
+          "verified": true,
+          "account_status": "active",
+          "open_order_count": 0
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "citations": null,
+            "text": "I've verified your account. Now let me look up that order.",
+            "type": "text"
+          },
+          {
+            "id": "toolu_01Jpsi5WDsTHCBgknSLcakqL",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "order_id": "ORD-555",
+              "customer_id": "CUST-1002"
+            },
+            "name": "lookup_order",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "lookup_order",
+        "input": {
+          "order_id": "ORD-555",
+          "customer_id": "CUST-1002"
+        },
+        "result": {
+          "ok": true,
+          "order_id": "ORD-555",
+          "status": "delivered",
+          "placed_at": "2026-08-25T20:26:11Z",
+          "delivered_at": "2026-08-30T20:26:11Z",
+          "currency": "USD",
+          "order_total": "680.00",
+          "refundable_amount": "680.00",
+          "already_refunded": "0.00",
+          "within_refund_window": true,
+          "items": [
+            {
+              "name": "Ergonomic Task Chair",
+              "qty": 1,
+              "unit_price": "680.00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "citations": null,
+            "text": "I have the order details. Let me process the refund.",
+            "type": "text"
+          },
+          {
+            "id": "toolu_017bgqnJio7UDCc6dYGC7dtk",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "customer_id": "CUST-1002",
+              "order_id": "ORD-555",
+              "amount": "680.00",
+              "reason": "damaged"
+            },
+            "name": "process_refund",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "process_refund",
+        "input": {
+          "customer_id": "CUST-1002",
+          "order_id": "ORD-555",
+          "amount": "680.00",
+          "reason": "damaged"
+        },
+        "result": {
+          "ok": false,
+          "errorCategory": "permission",
+          "isRetryable": false,
+          "message": "A refund of 680.00 exceeds the amount support can approve directly. A human must approve it \u2014 escalate instead of retrying."
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "signature": "CAIS+gEKjgEIERgCKkBaBr5dYCWArkw+j5pd2XyFtHuwbk2/M33C9jW9ekcu+dIprbQTMevj32hNF1PJezTIkGrQL+KzNKfQNmywHCIbMg1jbGF1ZGUtb3B1cy01OAFCCHRoaW5raW5nWiQyNmJhMGJlMy01OTgyLTRhNjYtYTJjNy01NGNiZjQ0MjViODioAe6v59QGEgwyOe0fJG+kHx8kDuwaDNm7ntnAdEWOoD+XmiIwp+A7PcAXcN8QhlDlNf9+zmGnoWMvIvt+5CqmKogL1fcwBeKXJ9jx/q/ljb9I8ckWKhkgPEY3RLsOKR532Gr+FaZ32iHeSfpM6LL6GAE=",
+            "thinking": "This seems like it needs escalating to a higher level.",
+            "type": "thinking"
+          },
+          {
+            "citations": null,
+            "text": "The refund amount is above what I can approve directly, so I'm handing this to a human for approval.",
+            "type": "text"
+          },
+          {
+            "id": "toolu_01TVtFpP1Vzh5cgyfQfvDDS6",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "customer_ref": "CUST-1002",
+              "order_id": "ORD-555",
+              "reason": "Customer Bob Carter (bob.carter@example.com, CUST-1002) requests a full refund of USD 680.00 for ORD-555 \u2014 one Ergonomic Task Chair, unit price 680.00. Reported fault: the gas lift will not hold height, so the item is defective. Order was delivered 2026-08-30 and is within the refund window; refundable_amount is 680.00 with 0.00 already refunded. Identity was verified by email. Refund reason code: damaged. I could not complete it myself: process_refund returned a non-retryable permission error because 680.00 exceeds the amount support can auto-approve. Requesting human approval to issue the full 680.00 refund.",
+              "category": "refund_over_limit"
+            },
+            "name": "escalate_to_human",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "escalate_to_human",
+        "input": {
+          "customer_ref": "CUST-1002",
+          "order_id": "ORD-555",
+          "reason": "Customer Bob Carter (bob.carter@example.com, CUST-1002) requests a full refund of USD 680.00 for ORD-555 \u2014 one Ergonomic Task Chair, unit price 680.00. Reported fault: the gas lift will not hold height, so the item is defective. Order was delivered 2026-08-30 and is within the refund window; refundable_amount is 680.00 with 0.00 already refunded. Identity was verified by email. Refund reason code: damaged. I could not complete it myself: process_refund returned a non-retryable permission error because 680.00 exceeds the amount support can auto-approve. Requesting human approval to issue the full 680.00 refund.",
+          "category": "refund_over_limit"
+        },
+        "result": {
+          "ok": true,
+          "ticket_id": "TKT-27189AD1",
+          "status": "open",
+          "ticket": {
+            "ticket_id": "TKT-27189AD1",
+            "created_at": "2026-09-03T20:26:24Z",
+            "status": "open",
+            "category": "refund_over_limit",
+            "customer": {
+              "customer_id": "CUST-1002",
+              "name": "Bob Carter",
+              "email": "bob.carter@example.com",
+              "phone": "+14155550102",
+              "account_status": "active"
+            },
+            "order": {
+              "order_id": "ORD-555",
+              "status": "delivered",
+              "currency": "USD",
+              "order_total": "680.00",
+              "refundable_amount": "680.00",
+              "already_refunded": "0.00"
+            },
+            "reason": "Customer Bob Carter (bob.carter@example.com, CUST-1002) requests a full refund of USD 680.00 for ORD-555 \u2014 one Ergonomic Task Chair, unit price 680.00. Reported fault: the gas lift will not hold height, so the item is defective. Order was delivered 2026-08-30 and is within the refund window; refundable_amount is 680.00 with 0.00 already refunded. Identity was verified by email. Refund reason code: damaged. I could not complete it myself: process_refund returned a non-retryable permission error because 680.00 exceeds the amount support can auto-approve. Requesting human approval to issue the full 680.00 refund."
+          }
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "end_turn",
+        "content": [
+          {
+            "citations": null,
+            "text": "Thanks for your patience, Bob \u2014 here's where things stand.\n\n**What I confirmed on ORD-555:**\n- Ergonomic Task Chair, qty 1 \u2014 USD 680.00\n- Status: delivered on 2026-08-30\n- Still within the refund window, with the full USD 680.00 refundable and nothing refunded so far\n\n**What happened when I tried to refund it:** a faulty gas lift is exactly the kind of defect that qualifies, and the order is eligible \u2014 but USD 680.00 is above the limit I'm allowed to approve on my own. That's a hard limit on my side, not a question about your claim, so I didn't retry it.\n\n**What I did instead:** I escalated it to a human agent for approval.\n\n- **Ticket:** TKT-27189AD1 (status: open)\n- The ticket includes your account details, the full order snapshot, the defect description, and my note that the only thing outstanding is sign-off on the USD 680.00 refund.\n\nA human agent will review and authorize the refund; you don't need to re-explain anything or resubmit a request. If it's helpful, hold onto the chair until they're in touch, in case they want to arrange a return or ask for a photo of the gas lift.\n\nOne thing I can't tell you is the exact turnaround time or the refund's final approval \u2014 that's the reviewing agent's call. If you'd like to follow up, quote ticket **TKT-27189AD1**.",
+            "type": "text"
+          }
+        ]
+      }
+    }
+  ]
+}

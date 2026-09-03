@@ -1,0 +1,163 @@
+{
+  "title": "transient error \u2014 order service times out once, agent retries and succeeds",
+  "events": [
+    {
+      "kind": "user_message",
+      "data": {
+        "text": "Hi, Alice Nguyen, alice.nguyen@example.com \u2014 can you check the status of ORD-789?"
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "citations": null,
+            "text": "I'll verify your identity first, then pull up that order.",
+            "type": "text"
+          },
+          {
+            "id": "toolu_01FqxJS8jRqvQCUSxiU2u6r1",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "full_name": "Alice Nguyen",
+              "email": "alice.nguyen@example.com",
+              "phone": null
+            },
+            "name": "get_customer",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "get_customer",
+        "input": {
+          "full_name": "Alice Nguyen",
+          "email": "alice.nguyen@example.com",
+          "phone": null
+        },
+        "result": {
+          "ok": true,
+          "customer_id": "CUST-1001",
+          "name": "Alice Nguyen",
+          "email": "alice.nguyen@example.com",
+          "verified": true,
+          "account_status": "active",
+          "open_order_count": 1
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "signature": "CAISwQIKjgEIERgCKkCxEdJTR2c3lgpip2JpPut1VcYbTh/FqusvfbC4Ynlb5sDe5SI5C20xaDaQvt+ZuFpa2FCiIOShvBMWO62TVkSiMg1jbGF1ZGUtb3B1cy01OAFCCHRoaW5raW5nWiQyNmJhMGJlMy01OTgyLTRhNjYtYTJjNy01NGNiZjQ0MjViODioAYOw59QGEgxD2K2jfJHXxrplvHMaDBRVMQrodk6t+XuORyIwocnZa7R9bYcjZGWO3hV0wRgycGop5ybpQjEbzUiQ+sYDXQ3cKA0b1cgVlF7NpX67KmBBQJJgaN9TzRTAyjSgR/y2wQjFu8l0b+2ZqFhtljoCmJpx81b0rNv4wjjUEnb8YWpShJOCPDfhwYFpG4Jc25Zt7iHYp9K8p82E6QEqCmveuMIcI36JIdj+pc9ppX3Wd1QYAQ==",
+            "thinking": "I accidentally passed \"null\" as a string for phone, but it worked anyway. Moving on to look up the order now.",
+            "type": "thinking"
+          },
+          {
+            "id": "toolu_01MXQ38ryQeNyXNrwaYhbMMJ",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "order_id": "ORD-789",
+              "customer_id": "CUST-1001"
+            },
+            "name": "lookup_order",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "lookup_order",
+        "input": {
+          "order_id": "ORD-789",
+          "customer_id": "CUST-1001"
+        },
+        "result": {
+          "ok": false,
+          "errorCategory": "transient",
+          "isRetryable": true,
+          "message": "order service timed out; retry in a moment"
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "id": "toolu_018uCx8UfSLhyvw4V5xy2493",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "order_id": "ORD-789",
+              "customer_id": "CUST-1001"
+            },
+            "name": "lookup_order",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "lookup_order",
+        "input": {
+          "order_id": "ORD-789",
+          "customer_id": "CUST-1001"
+        },
+        "result": {
+          "ok": true,
+          "order_id": "ORD-789",
+          "status": "shipped",
+          "placed_at": "2026-08-31T20:26:32Z",
+          "delivered_at": null,
+          "currency": "USD",
+          "order_total": "64.00",
+          "refundable_amount": "64.00",
+          "already_refunded": "0.00",
+          "within_refund_window": false,
+          "items": [
+            {
+              "name": "Anti-Fatigue Mat",
+              "qty": 1,
+              "unit_price": "64.00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "end_turn",
+        "content": [
+          {
+            "citations": null,
+            "text": "Thanks, Alice \u2014 you're verified, and here's where **ORD-789** stands:\n\n- **Status:** Shipped (not yet marked delivered)\n- **Placed:** August 31, 2026\n- **Item:** Anti-Fatigue Mat \u00d7 1 \u2014 $64.00\n- **Order total:** $64.00 USD\n- **Refunded so far:** $0.00\n\nOne thing worth flagging: this order is currently showing as **outside the standard refund window**, so if the mat arrives damaged, never shows up, or you want to return it, I won't be able to process a refund automatically \u2014 but I can hand it to a human agent to review as an exception. Just say the word and let me know what's going on with it.\n\nAnything else I can look into for you?",
+            "type": "text"
+          }
+        ]
+      }
+    }
+  ]
+}

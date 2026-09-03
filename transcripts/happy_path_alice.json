@@ -1,0 +1,225 @@
+{
+  "title": "Happy path \u2014 Alice Nguyen \u2014 two jobs in one message",
+  "events": [
+    {
+      "kind": "user_message",
+      "data": {
+        "text": "Hi, this is Alice Nguyen (alice.nguyen@example.com). Two things: the blender from ORD-123 turned up with a cracked jug, so I'd like a refund for it; and separately, can you tell me where ORD-789 is right now?"
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "citations": null,
+            "text": "I'll start by verifying your identity, then pull up both orders.",
+            "type": "text"
+          },
+          {
+            "id": "toolu_01RuKx64zokZ9YJwRDnX9pMS",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "full_name": "Alice Nguyen",
+              "email": "alice.nguyen@example.com",
+              "phone": null
+            },
+            "name": "get_customer",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "get_customer",
+        "input": {
+          "full_name": "Alice Nguyen",
+          "email": "alice.nguyen@example.com",
+          "phone": null
+        },
+        "result": {
+          "ok": true,
+          "customer_id": "CUST-1001",
+          "name": "Alice Nguyen",
+          "email": "alice.nguyen@example.com",
+          "verified": true,
+          "account_status": "active",
+          "open_order_count": 1
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "citations": null,
+            "text": "I've verified your account. Now let me pull up both orders.",
+            "type": "text"
+          },
+          {
+            "id": "toolu_01VqHLTpRNMQMyuZsYmyEhqT",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "order_id": "ORD-123",
+              "customer_id": "CUST-1001"
+            },
+            "name": "lookup_order",
+            "type": "tool_use",
+            "toolset_name": null
+          },
+          {
+            "id": "toolu_01BwZiiJ7Puyg9z2TPP7xPg7",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "order_id": "ORD-789",
+              "customer_id": "CUST-1001"
+            },
+            "name": "lookup_order",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "lookup_order",
+        "input": {
+          "order_id": "ORD-123",
+          "customer_id": "CUST-1001"
+        },
+        "result": {
+          "ok": true,
+          "order_id": "ORD-123",
+          "status": "delivered",
+          "placed_at": "2026-08-22T20:25:38Z",
+          "delivered_at": "2026-08-28T20:25:38Z",
+          "currency": "USD",
+          "order_total": "165.00",
+          "refundable_amount": "165.00",
+          "already_refunded": "0.00",
+          "within_refund_window": true,
+          "items": [
+            {
+              "name": "Countertop Blender",
+              "qty": 1,
+              "unit_price": "129.00"
+            },
+            {
+              "name": "Spare Blending Cup",
+              "qty": 2,
+              "unit_price": "18.00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "lookup_order",
+        "input": {
+          "order_id": "ORD-789",
+          "customer_id": "CUST-1001"
+        },
+        "result": {
+          "ok": true,
+          "order_id": "ORD-789",
+          "status": "shipped",
+          "placed_at": "2026-08-31T20:25:38Z",
+          "delivered_at": null,
+          "currency": "USD",
+          "order_total": "64.00",
+          "refundable_amount": "64.00",
+          "already_refunded": "0.00",
+          "within_refund_window": false,
+          "items": [
+            {
+              "name": "Anti-Fatigue Mat",
+              "qty": 1,
+              "unit_price": "64.00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "signature": "CAISogIKjgEIERgCKkCPglyITPw04AWH58V75UgsvMdjddvdWdkCjGkElv++E50dLR9b/pSruyoCPBoovsNxwhHUQ8QjXiT7iYUNHnWTMg1jbGF1ZGUtb3B1cy01OAFCCHRoaW5raW5nWiQyNmJhMGJlMy01OTgyLTRhNjYtYTJjNy01NGNiZjQ0MjViODioAcyv59QGEgxx2/In5i1718nz+/EaDPfwXFISYkNFVVxvLSIwE6qsQBEeIm9+4T5OlflLVyyzcnKlAenL1LsBxq3coG6kfVVETVbM1tBOY0MdCgeMKkFVJdc+Gjsc9dFx/l/IFDAM9BdhjW/uMpLxSjL5wVbrTiccIkHdLm7CbAlUYCgoCy6spHg0o9Xpv0swG8fL01MiuxgB",
+            "thinking": "I'm processing just the blender refund at $129.00, marking the reason as damaged.",
+            "type": "thinking"
+          },
+          {
+            "citations": null,
+            "text": "Both orders are up. Let me process the refund for the damaged blender.",
+            "type": "text"
+          },
+          {
+            "id": "toolu_01Goci4oCjZNYxBnoaDzboUu",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "customer_id": "CUST-1001",
+              "order_id": "ORD-123",
+              "amount": "129.00",
+              "reason": "damaged"
+            },
+            "name": "process_refund",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "process_refund",
+        "input": {
+          "customer_id": "CUST-1001",
+          "order_id": "ORD-123",
+          "amount": "129.00",
+          "reason": "damaged"
+        },
+        "result": {
+          "ok": true,
+          "refund_id": "RF-ebaac3215c",
+          "amount": "129.00",
+          "currency": "USD",
+          "status": "completed"
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "end_turn",
+        "content": [
+          {
+            "citations": null,
+            "text": "All set on both counts, Alice:\n\n**1. Refund for the cracked blender (ORD-123)** \u2014 Done. I've refunded the full price of the Countertop Blender, **$129.00 USD**, as a damaged-item refund. Refund ID: **RF-ebaac3215c**, status: completed. It should appear back on your original payment method according to your bank's usual processing time.\n\nI refunded just the blender, since the two Spare Blending Cups on that order weren't mentioned as damaged. If those arrived damaged too, or you'd rather return the whole order, just say so \u2014 ORD-123 is still within its refund window, and there's $36.00 remaining as refundable on it.\n\n**2. Where is ORD-789?** \u2014 That order (1x Anti-Fatigue Mat, $64.00 USD) was placed on 31 August 2026 and its current status is **shipped**, so it's in transit and has not been marked delivered yet. I don't have carrier tracking details or a delivery estimate on my side \u2014 that would be in the shipping confirmation email for that order. If it doesn't turn up and you'd like me to look into it, let me know and I can help or pass it to our team.\n\nAnything else I can sort out for you?",
+            "type": "text"
+          }
+        ]
+      }
+    }
+  ]
+}

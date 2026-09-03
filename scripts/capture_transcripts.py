@@ -41,30 +41,45 @@ SCENARIOS: dict[str, dict] = {
         ),
         "fail_mode": "none",
     },
-    "over_limit_demo": {
-        "title": "Enforcement + escalation — Bob wants a $742 refund (above the code ceiling)",
+    "ceiling_escalation": {
+        "title": "Enforcement — $500 code ceiling fires, agent escalates (Bob, ORD-555, $680)",
         "message": (
-            "Bob Carter here (bob.carter@example.com). The standing desk frame from ORD-456 "
-            "arrived bent in the box. I want the full amount back please."
+            "Bob Carter here (bob.carter@example.com). The Ergonomic Task Chair from ORD-555 "
+            "is faulty — the gas lift won't hold. I'd like a full refund please."
         ),
         "fail_mode": "none",
     },
-    "errors_transient": {
-        "title": "Transient error — the order service times out once, agent retries",
+    "error_transient": {
+        "title": "transient error — order service times out once, agent retries and succeeds",
         "message": (
-            "Hi, Alice Nguyen, alice.nguyen@example.com — can you check the status of ORD-789 "
-            "for me?"
+            "Hi, Alice Nguyen, alice.nguyen@example.com — can you check the status of ORD-789?"
         ),
         "fail_mode": "transient",
+    },
+    "error_business": {
+        "title": "business error — refund not possible (store-credit order), agent explains, no retry, no escalation",
+        "message": (
+            "Alice Nguyen here (alice.nguyen@example.com). Please refund the $129.00 "
+            "Countertop Blender on ORD-123 — it arrived with a cracked jug."
+        ),
+        "fail_mode": "business",
+    },
+    "error_validation": {
+        "title": "validation error — retryable; agent retries and the refund succeeds",
+        "message": (
+            "Alice Nguyen (alice.nguyen@example.com) — please refund the $129.00 Countertop "
+            "Blender on ORD-123, it arrived cracked."
+        ),
+        "fail_mode": "validation",
     },
 }
 
 
 def run_one(key: str) -> None:
     spec = SCENARIOS[key]
-    import anthropic
+    from support_agent.client import make_client
 
-    client = anthropic.Anthropic()
+    client = make_client()
     recorder = TranscriptRecorder(title=spec["title"])
     result = run_conversation(
         client,
@@ -74,13 +89,6 @@ def run_one(key: str) -> None:
         fail_mode=spec["fail_mode"],
         model=os.environ.get("ANTHROPIC_MODEL", "claude-opus-5"),
         on_event=recorder,
-    )
-    # append the final consolidated reply + a short machine summary
-    recorder.events.append(
-        {
-            "kind": "assistant_turn",
-            "data": {"stop_reason": "end_turn", "content": [{"type": "text", "text": result.reply}]},
-        }
     )
     OUT.mkdir(exist_ok=True)
     recorder.write(OUT / key)

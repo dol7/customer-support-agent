@@ -124,6 +124,18 @@ def _seeded_backend() -> "Backend":
             placed_at=now - 3 * _DAY,
             delivered_at=None,
         ),
+        Order(
+            # in the refund window, but the value is above the auto-approval ceiling —
+            # the model has no business reason to pre-empt, so it will attempt the
+            # refund and hit the $500 ceiling in code.
+            order_id="ORD-555",
+            customer_id="CUST-1002",
+            status="delivered",
+            currency="USD",
+            items=[OrderItem("SKU-CHAIR-07", "Ergonomic Task Chair", 1, Decimal("680.00"))],
+            placed_at=now - 9 * _DAY,
+            delivered_at=now - 4 * _DAY,
+        ),
     ]
     return Backend(
         {c.customer_id: c for c in customers},

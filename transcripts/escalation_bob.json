@@ -1,0 +1,138 @@
+{
+  "title": "Escalation \u2014 Bob Carter explicitly asks for a human (ORD-456)",
+  "events": [
+    {
+      "kind": "user_message",
+      "data": {
+        "text": "This is Bob Carter, bob.carter@example.com. I've gone back and forth on ORD-456 too many times already. I don't want to go through it again with a bot \u2014 please put me through to a real person."
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "signature": "CAISuAYKjgEIERgCKkCGamwPjXWVOid7jcL579UJkGxlv/6iWJ7kSZATQRMcmMsVn8W3ei7WP7ZwQs8VjbYx3IVqUIXPi3vmKeqoP7/UMg1jbGF1ZGUtb3B1cy01OAFCCHRoaW5raW5nWiQyNmJhMGJlMy01OTgyLTRhNjYtYTJjNy01NGNiZjQ0MjViODioAdqv59QGEgxBXUMtStwagcu6AaIaDNaxzFq4TxWagzl1YCIwOUvHnnYTJMTe4gwbiyXGu/8dTKPvZqLg4JgSvNhDvYAuNfIS/HGKxGYIndlYV2KvKtYEJLSYCyzCMcy915NLB7ONk2IlCb7EMCQ6T72xG4A93164he4PGJJl6O0h6vN3p05xjzt5VpG+pzdD60eBRCMeaj7twS/YACPH3We/seF0kRJB8wBUVsUgdcfXmx6poW1KW6m2JgTwIkx0y8YimK//I0gc4cNK8dBhJX7kShCCoY1SJ3nbPL1ZWbQ9QoGgYaYXsshD/g0WVnWaZ4L8ETtWJrxBHfL3EM2Tj5UEMxZoLHR7JvZhuBgimpTUs+pVJBvNx0Fb/Z3Zxk6N6H9ZErUtfhG5fROQa0mOjUlHkjy0rp+kuuSAHC/F4w3adCqxObpPd3plVxwXzz92632ro4Zb8CNAsMNz4E4b2sV+mxljIEfBYdqQwMWIa25g/GudtY11WCS94s1/uDO+kqKecSJEr+5KSgZcrJpyLoru2su+abCHP7uEDjYOvFBuoZqWwIwOgs4tCk8MaJZ917QZyrqMOv3jx+NzASmAfD/20GAXD/T8C5jRq4BJ4sdZWZG00xItTuPB0+BN7UF5v+YG9m9QuEHuY7Y1B9XYbx0D5Kn5PxC0ug5RiOFjvDwbbkcg/N1hLMD88Zf4tzqWzjY919g4KegSAbiR8ANOjXoQhuZwQ0SaSkjYdp+YxB25WcBpnYY1MZKOa/0xH4XNbFq+0HI5pwb+kqWJV1gu7Vke/zfqFHV+maSYdDZOKcp6tTJIKh/SQaOHZG16ygxVbHHb5tj39eFF3r/hQm5K9oSN2Gp24BdeoQtLk/pMWNvjACsg5jn8tpd6P2jvkkUn/lc2ELVs0sQSboHu8xgB",
+            "thinking": "The customer wants a human right away, so I should escalate promptly without delay. I'll quickly verify their identity first with get_customer to get a proper customer_id, since that improves the ticket quality without much extra delay, then proceed to escalate_to_human.",
+            "type": "thinking"
+          },
+          {
+            "citations": null,
+            "text": "I'll get you to a person right away \u2014 just pulling up your account so the ticket is complete.",
+            "type": "text"
+          },
+          {
+            "id": "toolu_01Lk4qk4sX1uhyH3fVeuaieW",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "full_name": "Bob Carter",
+              "email": "bob.carter@example.com",
+              "phone": null
+            },
+            "name": "get_customer",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "get_customer",
+        "input": {
+          "full_name": "Bob Carter",
+          "email": "bob.carter@example.com",
+          "phone": null
+        },
+        "result": {
+          "ok": true,
+          "customer_id": "CUST-1002",
+          "name": "Bob Carter",
+          "email": "bob.carter@example.com",
+          "verified": true,
+          "account_status": "active",
+          "open_order_count": 0
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "id": "toolu_01KJkWceSzQ4unQgWqxAvxvq",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "customer_ref": "CUST-1002",
+              "order_id": "ORD-456",
+              "reason": "Customer Bob Carter (bob.carter@example.com, CUST-1002) explicitly asked to speak with a human agent about ORD-456 and declined to work through it with the automated agent. He states he has already gone back and forth on this order multiple times, so there is prior contact history to review. He did not restate the specific issue with the order to me, so please review the order and prior contact history before calling him back. No refund or other action has been taken by me.",
+              "category": "customer_requested_human"
+            },
+            "name": "escalate_to_human",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "escalate_to_human",
+        "input": {
+          "customer_ref": "CUST-1002",
+          "order_id": "ORD-456",
+          "reason": "Customer Bob Carter (bob.carter@example.com, CUST-1002) explicitly asked to speak with a human agent about ORD-456 and declined to work through it with the automated agent. He states he has already gone back and forth on this order multiple times, so there is prior contact history to review. He did not restate the specific issue with the order to me, so please review the order and prior contact history before calling him back. No refund or other action has been taken by me.",
+          "category": "customer_requested_human"
+        },
+        "result": {
+          "ok": true,
+          "ticket_id": "TKT-B98DF14F",
+          "status": "open",
+          "ticket": {
+            "ticket_id": "TKT-B98DF14F",
+            "created_at": "2026-09-03T20:26:07Z",
+            "status": "open",
+            "category": "customer_requested_human",
+            "customer": {
+              "customer_id": "CUST-1002",
+              "name": "Bob Carter",
+              "email": "bob.carter@example.com",
+              "phone": "+14155550102",
+              "account_status": "active"
+            },
+            "order": {
+              "order_id": "ORD-456",
+              "status": "delivered",
+              "currency": "USD",
+              "order_total": "742.00",
+              "refundable_amount": "742.00",
+              "already_refunded": "0.00"
+            },
+            "reason": "Customer Bob Carter (bob.carter@example.com, CUST-1002) explicitly asked to speak with a human agent about ORD-456 and declined to work through it with the automated agent. He states he has already gone back and forth on this order multiple times, so there is prior contact history to review. He did not restate the specific issue with the order to me, so please review the order and prior contact history before calling him back. No refund or other action has been taken by me."
+          }
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "end_turn",
+        "content": [
+          {
+            "citations": null,
+            "text": "Done, Bob \u2014 you're being handed to a human agent. No need to explain anything again to me.\n\n- **Ticket:** TKT-B98DF14F (status: open)\n- **Order attached:** ORD-456\n- **On file for contact:** bob.carter@example.com and +14155550102\n\nThe ticket includes a snapshot of your account and ORD-456, plus a note that you've already been back and forth on this several times, so the agent will review your prior contact history before reaching out rather than starting from scratch. I haven't made any changes to the order.",
+            "type": "text"
+          }
+        ]
+      }
+    }
+  ]
+}

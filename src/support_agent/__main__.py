@@ -43,17 +43,17 @@ def main(argv: list[str] | None = None) -> int:
     except ImportError:
         pass
 
-    try:
-        import anthropic
-    except ImportError:
-        print("anthropic SDK not installed: pip install -r requirements.txt", file=sys.stderr)
-        return 2
-
     if not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")):
         print("set ANTHROPIC_API_KEY (or ANTHROPIC_AUTH_TOKEN) to run against the API", file=sys.stderr)
         return 2
 
-    client = anthropic.Anthropic()
+    try:
+        from .client import make_client
+
+        client = make_client()
+    except ImportError:
+        print("anthropic SDK not installed: pip install -r requirements.txt", file=sys.stderr)
+        return 2
     recorder = TranscriptRecorder(title="CLI run")
 
     try:

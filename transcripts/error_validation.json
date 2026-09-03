@@ -1,0 +1,234 @@
+{
+  "title": "validation error \u2014 retryable; agent retries and the refund succeeds",
+  "events": [
+    {
+      "kind": "user_message",
+      "data": {
+        "text": "Alice Nguyen (alice.nguyen@example.com) \u2014 please refund the $129.00 Countertop Blender on ORD-123, it arrived cracked."
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "citations": null,
+            "text": "I'll start by verifying your identity.",
+            "type": "text"
+          },
+          {
+            "id": "toolu_01EKBXAcRVYmYYZEzeAq67Ft",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "full_name": "Alice Nguyen",
+              "email": "alice.nguyen@example.com",
+              "phone": null
+            },
+            "name": "get_customer",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "get_customer",
+        "input": {
+          "full_name": "Alice Nguyen",
+          "email": "alice.nguyen@example.com",
+          "phone": null
+        },
+        "result": {
+          "ok": true,
+          "customer_id": "CUST-1001",
+          "name": "Alice Nguyen",
+          "email": "alice.nguyen@example.com",
+          "verified": true,
+          "account_status": "active",
+          "open_order_count": 1
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "citations": null,
+            "text": "I'll now pull up the order details.",
+            "type": "text"
+          },
+          {
+            "id": "toolu_01M12HhPHLCuGNuMEhQAthLd",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "order_id": "ORD-123",
+              "customer_id": "CUST-1001"
+            },
+            "name": "lookup_order",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "lookup_order",
+        "input": {
+          "order_id": "ORD-123",
+          "customer_id": "CUST-1001"
+        },
+        "result": {
+          "ok": true,
+          "order_id": "ORD-123",
+          "status": "delivered",
+          "placed_at": "2026-08-22T20:38:59Z",
+          "delivered_at": "2026-08-28T20:38:59Z",
+          "currency": "USD",
+          "order_total": "165.00",
+          "refundable_amount": "165.00",
+          "already_refunded": "0.00",
+          "within_refund_window": true,
+          "items": [
+            {
+              "name": "Countertop Blender",
+              "qty": 1,
+              "unit_price": "129.00"
+            },
+            {
+              "name": "Spare Blending Cup",
+              "qty": 2,
+              "unit_price": "18.00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "signature": "CAIStwIKjgEIERgCKkB1Uitmje1v9U5nfcpFa/q8sfYiJgZVpQPfFyRavm+xjHVRwtChzKxoy7HrwMp/nPjYiYS992g9w6IjiIuYZwS2Mg1jbGF1ZGUtb3B1cy01OAFCCHRoaW5raW5nWiQyNmJhMGJlMy01OTgyLTRhNjYtYTJjNy01NGNiZjQ0MjViODioAe6159QGEgwGrujTczfSIHmM0I4aDP3yeg4Ws8lriJcYLyIw35vhXTlRzF9wToNiFseWXFRF3XFhKGNkBM7TWNS+9CNrqnbVSY+fzU/oIoNgEKcwKlZ2ui2k+3To+X9/umfxJGqeIAzJG5xmdxgI89+F6jx4BjA4LCszY4PpaTVl5BWvNzzdWyzV01Hia4K7AoLNPPDN0Iwf60Zuz0UpnG4lrb+9Vw+QHYtK/xgB",
+            "thinking": "This is within the refund window, with $165.00 refundable and the damaged item costing $129.00, so I can process the refund.",
+            "type": "thinking"
+          },
+          {
+            "citations": null,
+            "text": "The order checks out. Processing the refund for the blender now.",
+            "type": "text"
+          },
+          {
+            "id": "toolu_01GpPdwnfRG7smvAxaKFevKR",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "customer_id": "CUST-1001",
+              "order_id": "ORD-123",
+              "amount": "129.00",
+              "reason": "damaged"
+            },
+            "name": "process_refund",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "process_refund",
+        "input": {
+          "customer_id": "CUST-1001",
+          "order_id": "ORD-123",
+          "amount": "129.00",
+          "reason": "damaged"
+        },
+        "result": {
+          "ok": false,
+          "errorCategory": "validation",
+          "isRetryable": true,
+          "message": "amount must be a decimal string with two places, e.g. \"129.00\""
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "signature": "CAISjQQKjgEIERgCKkC19eNT89ka+NcyYY7P2ewtE+Pbv/4OtRiKOijAEbNlRTwz/rCBV6j+GyxeSnnCake4PRuXgyDphoL7YkNiPTbhMg1jbGF1ZGUtb3B1cy01OAFCCHRoaW5raW5nWiQyNmJhMGJlMy01OTgyLTRhNjYtYTJjNy01NGNiZjQ0MjViODioAfO159QGEgxV9R8R4SAyjdQ3CNwaDLLdR/z3GBN6orA4dyIwjRu1iCwDWsCixKvJssdI37XILYGWjIMFCe2Yr6HBR3jdI0m9msN2u+XLR4X/f42tKqsCs6IT/QPGz70r3MbbJAms1cdQyzrg96CzqrrRzhNybXRueEqhP+/5rviowjiV61GZyrSw8qwNrROHu+iHzSozOD5aQ/d/3+ts7nQCw1cikY0d7ETN+hsAts7t8cCkqGQONZ31GL3pewIj6rMAxNapG3FVXeMqj+oM9d6c2Ka43UMArR8lHYf0Ps9AvXVviHmC+YgQVV4uXwGV2QGqLiCOI52Z6ZAfJjB+Kfo6QffeEN2JlX+/vOXswubzUr7EFRUekDAWoK866tpqcNAJHqYACBjUVMhejOafm7+aFC028cOTqEF/lv+6DGsuwWhAVB1qDCkt1uM+8x/duMDXDWVvu9ipLOjuW6phWQOSLjoCBPIocmzL3LtwBOJWcJ4g1bygOlJ10q+wYADYe5cYAQ==",
+            "thinking": "\"129.00\" looks right formatting-wise, so I'm not sure why validation is failing\u2014maybe it's unrelated to the value itself. I'll just retry with the same input and see if it goes through.",
+            "type": "thinking"
+          },
+          {
+            "citations": null,
+            "text": "That error looks spurious \u2014 my amount was already in the correct format. Retrying once.",
+            "type": "text"
+          },
+          {
+            "id": "toolu_01W67mZ6CYx5UsqjEZexrGE2",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "customer_id": "CUST-1001",
+              "order_id": "ORD-123",
+              "amount": "129.00",
+              "reason": "damaged"
+            },
+            "name": "process_refund",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "process_refund",
+        "input": {
+          "customer_id": "CUST-1001",
+          "order_id": "ORD-123",
+          "amount": "129.00",
+          "reason": "damaged"
+        },
+        "result": {
+          "ok": true,
+          "refund_id": "RF-6a3fae531a",
+          "amount": "129.00",
+          "currency": "USD",
+          "status": "completed"
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "end_turn",
+        "content": [
+          {
+            "citations": null,
+            "text": "All set, Alice \u2014 here's where things landed:\n\n**Refund issued**\n- Order: ORD-123 (delivered, still within the refund window)\n- Item: Countertop Blender \u2014 $129.00\n- Reason: damaged / arrived cracked\n- Refund ID: **RF-6a3fae531a**\n- Status: **completed**\n\nThe $129.00 has been refunded in USD. Refunds typically take a few business days to appear on your original payment method, depending on your bank.\n\n**A couple of notes on the rest of the order**\n- ORD-123 totaled $165.00, and the full $165.00 was refundable. After this refund, the remaining refundable balance is $36.00 \u2014 that's the 2 Spare Blending Cups at $18.00 each.\n- If those cups were damaged too, or if they're no use to you without the blender, just say the word and I can refund those as well while the order is still in its window.\n\nSorry the blender showed up cracked. Anything else I can take care of?",
+            "type": "text"
+          }
+        ]
+      }
+    }
+  ]
+}

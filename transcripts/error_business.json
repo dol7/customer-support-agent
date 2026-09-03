@@ -1,0 +1,182 @@
+{
+  "title": "business error \u2014 refund not possible (store-credit order), agent explains, no retry, no escalation",
+  "events": [
+    {
+      "kind": "user_message",
+      "data": {
+        "text": "Alice Nguyen here (alice.nguyen@example.com). Please refund the $129.00 Countertop Blender on ORD-123 \u2014 it arrived with a cracked jug."
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "citations": null,
+            "text": "I'll verify your identity first, then look at the order.",
+            "type": "text"
+          },
+          {
+            "id": "toolu_013aNrcf5BNGBgA4K28pwfDq",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "full_name": "Alice Nguyen",
+              "email": "alice.nguyen@example.com",
+              "phone": null
+            },
+            "name": "get_customer",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "get_customer",
+        "input": {
+          "full_name": "Alice Nguyen",
+          "email": "alice.nguyen@example.com",
+          "phone": null
+        },
+        "result": {
+          "ok": true,
+          "customer_id": "CUST-1001",
+          "name": "Alice Nguyen",
+          "email": "alice.nguyen@example.com",
+          "verified": true,
+          "account_status": "active",
+          "open_order_count": 1
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "citations": null,
+            "text": "I've verified your account. Now let me pull up the order details.",
+            "type": "text"
+          },
+          {
+            "id": "toolu_016aATfpY5JxiTXAxZcfF9uv",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "order_id": "ORD-123",
+              "customer_id": "CUST-1001"
+            },
+            "name": "lookup_order",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "lookup_order",
+        "input": {
+          "order_id": "ORD-123",
+          "customer_id": "CUST-1001"
+        },
+        "result": {
+          "ok": true,
+          "order_id": "ORD-123",
+          "status": "delivered",
+          "placed_at": "2026-08-22T20:38:39Z",
+          "delivered_at": "2026-08-28T20:38:39Z",
+          "currency": "USD",
+          "order_total": "165.00",
+          "refundable_amount": "165.00",
+          "already_refunded": "0.00",
+          "within_refund_window": true,
+          "items": [
+            {
+              "name": "Countertop Blender",
+              "qty": 1,
+              "unit_price": "129.00"
+            },
+            {
+              "name": "Spare Blending Cup",
+              "qty": 2,
+              "unit_price": "18.00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "tool_use",
+        "content": [
+          {
+            "citations": null,
+            "text": "I have the order details. Processing the refund for the damaged blender now.",
+            "type": "text"
+          },
+          {
+            "id": "toolu_018m6rogCM2bHP1QzNaNPjod",
+            "caller": {
+              "type": "direct"
+            },
+            "input": {
+              "customer_id": "CUST-1001",
+              "order_id": "ORD-123",
+              "amount": "129.00",
+              "reason": "damaged"
+            },
+            "name": "process_refund",
+            "type": "tool_use",
+            "toolset_name": null
+          }
+        ]
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "name": "process_refund",
+        "input": {
+          "customer_id": "CUST-1001",
+          "order_id": "ORD-123",
+          "amount": "129.00",
+          "reason": "damaged"
+        },
+        "result": {
+          "ok": false,
+          "errorCategory": "business",
+          "isRetryable": false,
+          "message": "This order was paid entirely with store credit, which is non-refundable under our terms of sale."
+        }
+      }
+    },
+    {
+      "kind": "assistant_turn",
+      "data": {
+        "stop_reason": "end_turn",
+        "content": [
+          {
+            "signature": "CAIS3QMKjgEIERgCKkDxNTBJyIRnLQJdb8N5LCNliXzjUGcPbT4bt47S4XiouhiUS2urMWiEGhkgtdo2KSTdcgSuBK+XlH3Sbe3EPHGEMg1jbGF1ZGUtb3B1cy01OAFCCHRoaW5raW5nWiQyNmJhMGJlMy01OTgyLTRhNjYtYTJjNy01NGNiZjQ0MjViODioAeC159QGEgyluJgnldBmP6wyU5EaDIVJd+twbQFzd6q9SCIwVr1b1hYdL2akiJNPTs5T7RavjogMCLmr48gyEvYTO8+KKNot2Cyho46mOILOju0RKvsBr/yFp5yUz20+2XO1Xad1dVK8xKcu9q1yoGphf/wbpzlMEN0awvJAg2bPYlaSO/69l1VqnF+5IiBJR1mh1/89QWexvORWM/ul2vW9Ydq99rLL4n6dex7CNVEXBJ5Vsn6tyfQmawnoSK+FbSp4kiURj1Q9jAV+loCTIsvE5lL4jPMmxR3hUUzXKadVq9JdlKsB8W5XU0pWp5fruCl7FSTPSHwZV96zcUMJBc47+HpqXSyy/Qv6n2q4unpFSvjkDqx7MXjSOSovG6OPZ84Q+NQmB+E4J1LfHJ3O3xl3ZJ45lDQ0gTvTWV+o5oIWDy9dxzAbH4wJVNV2ol9Ud9EYAQ==",
+            "thinking": "This is a business error, not something retryable, and a refund isn't possible here. I should explain that plainly to the customer while offering to escalate it as a policy exception if they'd like.",
+            "type": "thinking"
+          },
+          {
+            "citations": null,
+            "text": "Thanks for your patience, Alice \u2014 I verified your account and pulled up ORD-123. Here's where things landed:\n\n**The order:** Delivered on 2026-08-28, total $165.00 USD (1\u00d7 Countertop Blender at $129.00, 2\u00d7 Spare Blending Cup at $18.00). Nothing has been refunded on it yet, and it is still within the refund window.\n\n**The problem:** When I tried to issue the $129.00 refund for the cracked jug, the system declined it. ORD-123 was paid entirely with store credit, and under our terms of sale store credit is non-refundable. That's a policy restriction on the payment method, not a judgment about your claim \u2014 a blender arriving with a cracked jug is exactly the kind of thing that should be made right, and I'm not able to push the refund through myself.\n\n**What I can do:** I'd like to send this to a human agent as a policy-exception request, so someone with the authority to override the store-credit restriction can look at it. They could potentially approve a store-credit reissue or a replacement blender instead. Want me to open that ticket? If so, it helps if you tell me whether you'd prefer a replacement or credit back \u2014 I'll include it in the notes.\n\nAnd if you'd rather just talk to a person directly about it, say the word and I'll hand you over right away.",
+            "type": "text"
+          }
+        ]
+      }
+    }
+  ]
+}
