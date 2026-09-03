@@ -116,8 +116,14 @@ pytest -q
 
 ## Noticing misrouting in production
 
-`scripts/routing_eval.py` is an offline probe. In production, log
-`(first_tool_called, escalation_category, resolved?)` per conversation and watch for:
+`scripts/routing_eval.py` is the pre-merge probe: 8 deliberately ambiguous first messages,
+counting only *wrong-sibling* calls (lookup_order for an identity question, or get_customer
+for an order question) as misroutes. Last run against `claude-opus-5`: **0 misroutes** — the
+model either picked the right tool or answered in text; it never picked the sibling. Run it
+before any model bump or description edit.
+
+In production, log `(first_tool_called, escalation_category, resolved?)` per conversation and
+watch for:
 
 - `get_customer` ↔ `lookup_order` called back-to-back on the same turn pair (model corrected itself),
 - an `identity not verified` permission error immediately after a `lookup_order` attempt,
