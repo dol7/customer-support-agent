@@ -6,6 +6,14 @@ account issues. It reaches the backend through **Messages API tool definitions**
 **hand-written agentic loop**. Target: resolve ~80% of contacts on first contact, escalate the
 rest with a ticket a human can act on.
 
+> **Note on the brief.** The assignment says "extend `customer-support-skeleton/`". No such
+> skeleton was available to me, so this is a from-scratch implementation of the full spec
+> rather than an extension. Every component the skeleton would provide is here in
+> [`src/support_agent/`](src/support_agent): the `stop_reason` loop ([agent.py](src/support_agent/agent.py)),
+> the four tool definitions ([tools.py](src/support_agent/tools.py)), structured errors
+> ([errors.py](src/support_agent/errors.py)), and the in-code enforcement
+> ([backend.py](src/support_agent/backend.py) + the `dispatch` pre-exec hook).
+
 ## Three rules, and where each one lives
 
 | Rule | Enforced by | Not in |
@@ -133,7 +141,7 @@ watch for:
 
 ## Reflection
 
-### 1. You put the refund ceiling in code. Argue for a system-prompt instruction instead, then explain why it loses.
+### 1. You put the refund ceiling in code. Argue the case for a system-prompt instruction instead, then explain why it loses. Be specific about failure rate and money.
 
 **The case for the prompt.** It's one sentence — "never refund more than $500 without a
 human." No deploy, no code review, no test. Policy can change with a prompt edit. It keeps
