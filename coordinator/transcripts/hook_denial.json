@@ -1,0 +1,195 @@
+{
+  "title": "Hook \u2014 one PreToolUse rule, denial handled as data",
+  "events": [
+    {
+      "kind": "note",
+      "data": {
+        "text": "Over the ceiling: refund of $812.4 on ORD-789."
+      }
+    },
+    {
+      "kind": "prompt",
+      "data": {
+        "label": "refund/over-ceiling",
+        "text": "Concern c-hook. Issue a refund against ORD-789 for 812.40. Reason: damaged. Customer CUST-001, verified. Today 2026-09-07."
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "refund/over-ceiling",
+        "name": "mcp__northwind__process_refund",
+        "input": {
+          "order_id": "ORD-789",
+          "amount": 812.4
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "refund/over-ceiling",
+        "content": "$812.40 is over the $500.00 automatic refund ceiling (policy 3.5). This refund needs Tier 2 approval \u2014 escalate to a human agent instead of retrying.",
+        "is_error": true
+      }
+    },
+    {
+      "kind": "text",
+      "data": {
+        "label": "refund/over-ceiling",
+        "text": "```json\n[\n  {\n    \"concern_id\": \"c-hook\",\n    \"claim\": \"The refund of $812.40 against ORD-789 was denied because it exceeds the automatic refund ceiling and requires Tier 2 approval.\",\n    \"evidence\": \"$812.40 is over the $500.00 automatic refund ceiling (policy 3.5). This refund needs Tier 2 approval \u2014 escalate to a human agent instead of retrying.\",\n    \"source\": \"process_refund(ORD-789, 812.40)\"\n  }\n]\n```"
+      }
+    },
+    {
+      "kind": "result",
+      "data": {
+        "label": "refund/over-ceiling",
+        "subtype": "success",
+        "usage": {
+          "runs": 1,
+          "input_tokens": 4,
+          "output_tokens": 304,
+          "cache_read_tokens": 5528,
+          "cache_creation_tokens": 1997,
+          "total_tokens": 7833,
+          "cost_usd": 0.0132
+        }
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "hook decisions: [{'agent': 'over-ceiling', 'order_id': 'ORD-789', 'amount': 812.4, 'decision': 'deny'}]"
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "REFUND_LOG: []  ->  empty \u2014 nothing moved"
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "The denial came back to the refund-processor as a tool error. Now the coordinator routes it to the escalation-writer instead of retrying:"
+      }
+    },
+    {
+      "kind": "prompt",
+      "data": {
+        "label": "escalate/over-ceiling",
+        "text": "Concern c-hook. A refund of 812.40 on ORD-789 was denied by the $500 ceiling (policy 3.5) and needs Tier 2 approval. Customer CUST-001 (Alice Chen). root_cause: over-ceiling refund on a damaged footwear order. recommended_action: Tier 2 review and approve."
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "escalate/over-ceiling",
+        "name": "mcp__northwind__escalate_to_human",
+        "input": {
+          "customer_id": "CUST-001",
+          "root_cause": "Over-ceiling refund on a damaged footwear order: a refund of 812.40 on ORD-789 was denied by the $500 refund ceiling (policy 3.5) and requires Tier 2 approval.",
+          "recommended_action": "Tier 2 review and approve the 812.40 refund on ORD-789 for Alice Chen (CUST-001)."
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "escalate/over-ceiling",
+        "content": "{\"ok\": true, \"ticket\": \"ESC-9001\", \"customer_id\": \"CUST-001\", \"root_cause\": \"Over-ceiling refund on a damaged footwear order: a refund of 812.40 on ORD-789 was denied by the $500 refund ceiling (policy 3.5) and requires Tier 2 approval.\", \"recommended_action\": \"Tier 2 review and approve the 812.40 refund on ORD-789 for Alice Chen (CUST-001).\"}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "text",
+      "data": {
+        "label": "escalate/over-ceiling",
+        "text": "[{\"concern_id\": \"c-hook\", \"claim\": \"Escalation handoff created for CUST-001 (Alice Chen) regarding an over-ceiling refund of 812.40 on ORD-789 denied by the $500 ceiling (policy 3.5), needing Tier 2 approval.\", \"evidence\": \"{\\\"ok\\\": true, \\\"ticket\\\": \\\"ESC-9001\\\", \\\"customer_id\\\": \\\"CUST-001\\\", \\\"root_cause\\\": \\\"Over-ceiling refund on a damaged footwear order: a refund of 812.40 on ORD-789 was denied by the $500 refund ceiling (policy 3.5) and requires Tier 2 approval.\\\", \\\"recommended_action\\\": \\\"Tier 2 review and approve the 812.40 refund on ORD-789 for Alice Chen (CUST-001).\\\"}\", \"source\": \"escalate_to_human(customer_id='CUST-001')\"}]"
+      }
+    },
+    {
+      "kind": "result",
+      "data": {
+        "label": "escalate/over-ceiling",
+        "subtype": "success",
+        "usage": {
+          "runs": 2,
+          "input_tokens": 8,
+          "output_tokens": 904,
+          "cache_read_tokens": 11065,
+          "cache_creation_tokens": 4371,
+          "total_tokens": 16348,
+          "cost_usd": 0.0308
+        }
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "Under the ceiling: refund of $149.99 on ORD-123 \u2014 allowed."
+      }
+    },
+    {
+      "kind": "prompt",
+      "data": {
+        "label": "refund/under-ceiling",
+        "text": "Concern c1. Issue a refund against ORD-123 for 149.99. Reason: damaged. Customer CUST-001, verified. Today 2026-09-07."
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "refund/under-ceiling",
+        "name": "mcp__northwind__process_refund",
+        "input": {
+          "order_id": "ORD-123",
+          "amount": 149.99
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "refund/under-ceiling",
+        "content": "{\"ok\": true, \"refunded\": 149.99, \"order_id\": \"ORD-123\"}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "text",
+      "data": {
+        "label": "refund/under-ceiling",
+        "text": "[\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"Refund of 149.99 against ORD-123 for verified customer CUST-001 (reason: damaged) was processed successfully.\",\n    \"evidence\": \"{\\\"ok\\\": true, \\\"refunded\\\": 149.99, \\\"order_id\\\": \\\"ORD-123\\\"}\",\n    \"source\": \"process_refund(ORD-123, 149.99)\"\n  }\n]"
+      }
+    },
+    {
+      "kind": "result",
+      "data": {
+        "label": "refund/under-ceiling",
+        "subtype": "success",
+        "usage": {
+          "runs": 3,
+          "input_tokens": 12,
+          "output_tokens": 1209,
+          "cache_read_tokens": 16593,
+          "cache_creation_tokens": 6346,
+          "total_tokens": 24160,
+          "cost_usd": 0.0439
+        }
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "hook decisions: [{'agent': 'over-ceiling', 'order_id': 'ORD-789', 'amount': 812.4, 'decision': 'deny'}, {'agent': 'under-ceiling', 'order_id': 'ORD-123', 'amount': 149.99, 'decision': 'allow'}]"
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "REFUND_LOG: [{'order_id': 'ORD-123', 'amount': 149.99}]"
+      }
+    }
+  ]
+}

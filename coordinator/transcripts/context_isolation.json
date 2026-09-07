@@ -1,0 +1,257 @@
+{
+  "title": "Context isolation \u2014 a specialist starts empty",
+  "events": [
+    {
+      "kind": "note",
+      "data": {
+        "text": "WRONG: the policy-analyst is asked only 'Is ORD-789 still inside its return window?' It has read_policy but no order access and no clock \u2014 it cannot get the delivery date or today's date."
+      }
+    },
+    {
+      "kind": "prompt",
+      "data": {
+        "label": "policy/no-facts",
+        "text": "Is order ORD-789 still inside its return window?"
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "policy/no-facts",
+        "name": "mcp__northwind__read_policy",
+        "input": {
+          "section": "2.1"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "policy/no-facts",
+        "content": "{\"section\": \"2.1\", \"text\": \"Standard return window: 30 calendar days from delivery date.\", \"found\": true}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "policy/no-facts",
+        "name": "mcp__northwind__read_policy",
+        "input": {
+          "section": "2.2"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "policy/no-facts",
+        "content": "{\"section\": \"2.2\", \"text\": \"Footwear and apparel may be returned within 45 days if unworn with tags attached.\", \"found\": true}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "text",
+      "data": {
+        "label": "policy/no-facts",
+        "text": "```json\n[\n  {\n    \"concern_id\": \"none\",\n    \"claim\": \"I cannot determine whether ORD-789 is inside its return window because my prompt contains no delivered_on date, sku, or customer details for ORD-789, and I cannot look order data up.\",\n    \"evidence\": \"Standard return window: 30 calendar days from delivery date. (policy 2.1); Footwear and apparel may be returned within 45 days if unworn with tags attached. (policy 2.2) \u2014 but no delivery date for ORD-789 was provided to apply either rule.\",\n    \"source\": \"missing order facts in prompt (no lookup tool available); policy 2.1 and policy 2.2\"\n  }\n]\n```"
+      }
+    },
+    {
+      "kind": "result",
+      "data": {
+        "label": "policy/no-facts",
+        "subtype": "success",
+        "usage": {
+          "runs": 1,
+          "input_tokens": 6,
+          "output_tokens": 652,
+          "cache_read_tokens": 6336,
+          "cache_creation_tokens": 7829,
+          "total_tokens": 14823,
+          "cost_usd": 0.0401
+        }
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "RIGHT: every fact is in the prompt."
+      }
+    },
+    {
+      "kind": "prompt",
+      "data": {
+        "label": "policy/with-facts",
+        "text": "Concern c3. Is ORD-789 still returnable? Facts: item is footwear (SKU FW-2201), delivered 2026-07-29, today 2026-09-07, condition unworn, amount 812.4. Cite the clause."
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "policy/with-facts",
+        "name": "mcp__northwind__read_policy",
+        "input": {
+          "section": "1"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "policy/with-facts",
+        "content": "{\"section\": \"1\", \"text\": null, \"found\": false, \"available_sections\": [\"2.1\", \"2.2\", \"2.3\", \"3.4\", \"3.5\", \"5.2\"]}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "policy/with-facts",
+        "name": "mcp__northwind__read_policy",
+        "input": {
+          "section": "2"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "policy/with-facts",
+        "content": "{\"section\": \"2\", \"text\": null, \"found\": false, \"available_sections\": [\"2.1\", \"2.2\", \"2.3\", \"3.4\", \"3.5\", \"5.2\"]}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "policy/with-facts",
+        "name": "mcp__northwind__read_policy",
+        "input": {
+          "section": "2.1"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "policy/with-facts",
+        "content": "{\"section\": \"2.1\", \"text\": \"Standard return window: 30 calendar days from delivery date.\", \"found\": true}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "policy/with-facts",
+        "name": "mcp__northwind__read_policy",
+        "input": {
+          "section": "2.2"
+        }
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "policy/with-facts",
+        "name": "mcp__northwind__read_policy",
+        "input": {
+          "section": "2.3"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "policy/with-facts",
+        "content": "{\"section\": \"2.2\", \"text\": \"Footwear and apparel may be returned within 45 days if unworn with tags attached.\", \"found\": true}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "policy/with-facts",
+        "content": "{\"section\": \"2.3\", \"text\": \"Electronics return window: 14 days.\", \"found\": true}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "policy/with-facts",
+        "name": "mcp__northwind__read_policy",
+        "input": {
+          "section": "3.4"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "policy/with-facts",
+        "content": "{\"section\": \"3.4\", \"text\": \"Auto-escalate to Tier 2 if the customer mentions lawyer, BBB, chargeback, or social media.\", \"found\": true}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "policy/with-facts",
+        "name": "mcp__northwind__read_policy",
+        "input": {
+          "section": "3.5"
+        }
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "policy/with-facts",
+        "name": "mcp__northwind__read_policy",
+        "input": {
+          "section": "5.2"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "policy/with-facts",
+        "content": "{\"section\": \"3.5\", \"text\": \"Refund requests over $500 require Tier 2 approval.\", \"found\": true}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "policy/with-facts",
+        "content": "{\"section\": \"5.2\", \"text\": \"Duplicate charges: once a second charge for one order is confirmed, refund the extra charge to the original payment method. No further approval is needed below the section 3.5 ceiling.\", \"found\": true}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "text",
+      "data": {
+        "label": "policy/with-facts",
+        "text": "```json\n[\n  {\n    \"concern_id\": \"c3\",\n    \"claim\": \"ORD-789 is within the return window: footwear returned unworn may be returned within 45 days of delivery, and only 40 days have elapsed (delivered 2026-07-29, today 2026-09-07).\",\n    \"evidence\": \"Footwear and apparel may be returned within 45 days if unworn with tags attached.\",\n    \"source\": \"policy 2.2\"\n  },\n  {\n    \"concern_id\": \"c3\",\n    \"claim\": \"The return qualifies under the footwear rule rather than the 30-day standard window, which would otherwise have expired at 40 days.\",\n    \"evidence\": \"Standard return window: 30 calendar days from delivery date.\",\n    \"source\": \"policy 2.1\"\n  },\n  {\n    \"concern_id\": \"c3\",\n    \"claim\": \"Condition is given as unworn, but 'tags attached' is not stated in the facts, so approval is conditional on tags being present.\",\n    \"evidence\": \"condition unworn; policy 2.2 requires 'unworn with tags at\n\u2026 (+279 chars)"
+      }
+    },
+    {
+      "kind": "result",
+      "data": {
+        "label": "policy/with-facts",
+        "subtype": "success",
+        "usage": {
+          "runs": 2,
+          "input_tokens": 14,
+          "output_tokens": 1818,
+          "cache_read_tokens": 25391,
+          "cache_creation_tokens": 11121,
+          "total_tokens": 38344,
+          "cost_usd": 0.0698
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,626 @@
+{
+  "title": "Failure propagation \u2014 bare vs structured, access-failure vs empty",
+  "events": [
+    {
+      "kind": "note",
+      "data": {
+        "text": "BARE failure: lookup_order(ORD-456) returns is_error + the two words 'Lookup failed.' Nothing tells the coordinator retry from skip from escalate."
+      }
+    },
+    {
+      "kind": "prompt",
+      "data": {
+        "label": "investigate/bare-fault",
+        "text": "Concern c2. Look up ORD-456 \u2014 the customer says it was charged twice. Customer CUST-001, verified. Today 2026-09-07. Report what you find, or, if the lookup fails, what was attempted and what you know anyway."
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "investigate/bare-fault",
+        "name": "mcp__northwind__lookup_order",
+        "input": {
+          "order_id": "ORD-456"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "investigate/bare-fault",
+        "content": "Lookup failed.",
+        "is_error": true
+      }
+    },
+    {
+      "kind": "text",
+      "data": {
+        "label": "investigate/bare-fault",
+        "text": "[\n  {\n    \"concern_id\": \"c2\",\n    \"claim\": \"The lookup for ORD-456 failed, so I could not verify whether the order was charged twice; no order fields (status, delivered_on, amount, sku, condition, charges) could be retrieved.\",\n    \"evidence\": \"Lookup failed.\",\n    \"source\": \"lookup_order(ORD-456)\"\n  }\n]"
+      }
+    },
+    {
+      "kind": "result",
+      "data": {
+        "label": "investigate/bare-fault",
+        "subtype": "success",
+        "usage": {
+          "runs": 1,
+          "input_tokens": 4,
+          "output_tokens": 205,
+          "cache_read_tokens": 5510,
+          "cache_creation_tokens": 1904,
+          "total_tokens": 7623,
+          "cost_usd": 0.0118
+        }
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "STRUCTURED failure: same timeout, returned as err('transient', retryable=True, attempted=..., partialResults=[...], alternatives=[...])."
+      }
+    },
+    {
+      "kind": "prompt",
+      "data": {
+        "label": "investigate/structured-fault",
+        "text": "Concern c2. Look up ORD-456 \u2014 the customer says it was charged twice. Customer CUST-001, verified. Today 2026-09-07. Report what you find, or, if the lookup fails, what was attempted and what you know anyway."
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "investigate/structured-fault",
+        "name": "mcp__northwind__lookup_order",
+        "input": {
+          "order_id": "ORD-456"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "investigate/structured-fault",
+        "content": "{\"ok\": false, \"errorCategory\": \"transient\", \"isRetryable\": true, \"message\": \"Order service timed out.\", \"attempted\": \"lookup_order(ORD-456)\", \"partialResults\": [{\"concern_id\": \"c2\", \"claim\": \"ORD-456 exists on this account.\", \"evidence\": \"order id resolved before the timeout\", \"source\": \"order index\"}], \"alternatives\": [\"retry lookup_order once\", \"proceed with the other concerns and flag c2 as unresolved\", \"escalate c2 to the billing team with what is known\"]}",
+        "is_error": true
+      }
+    },
+    {
+      "kind": "text",
+      "data": {
+        "label": "investigate/structured-fault",
+        "text": "[\n  {\n    \"concern_id\": \"c2\",\n    \"claim\": \"The lookup for ORD-456 failed, so I could not verify whether the order was charged twice.\",\n    \"evidence\": \"{\\\"ok\\\": false, \\\"errorCategory\\\": \\\"transient\\\", \\\"isRetryable\\\": true, \\\"message\\\": \\\"Order service timed out.\\\", \\\"attempted\\\": \\\"lookup_order(ORD-456)\\\"}\",\n    \"source\": \"lookup_order(ORD-456)\"\n  },\n  {\n    \"concern_id\": \"c2\",\n    \"claim\": \"Despite the timeout, the order service confirmed ORD-456 exists on this account before failing.\",\n    \"evidence\": \"partialResults: {\\\"concern_id\\\": \\\"c2\\\", \\\"claim\\\": \\\"ORD-456 exists on this account.\\\", \\\"evidence\\\": \\\"order id resolved before the timeout\\\", \\\"source\\\": \\\"order index\\\"}\",\n    \"source\": \"lookup_order(ORD-456).partialResults\"\n  }\n]"
+      }
+    },
+    {
+      "kind": "result",
+      "data": {
+        "label": "investigate/structured-fault",
+        "subtype": "success",
+        "usage": {
+          "runs": 2,
+          "input_tokens": 8,
+          "output_tokens": 647,
+          "cache_read_tokens": 12231,
+          "cache_creation_tokens": 2779,
+          "total_tokens": 15665,
+          "cost_usd": 0.0221
+        }
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "With the structured error the coordinator can act: it proceeds on the other concerns and names c2 unresolved. Full run under the fault:"
+      }
+    },
+    {
+      "kind": "prompt",
+      "data": {
+        "label": "decompose",
+        "text": "A customer sent this message:\n\nI'm alice@example.com. ORD-123 arrived damaged and I want a refund. ORD-456 got charged to my card twice. I bought shoes on ORD-789 forty days ago. Can I still return them? If this isn't sorted today I'm filing a chargeback.\n\nWhat does the customer need? List each distinct thing on its own line as `c1: <one sentence>`, `c2: ...`. Just the list \u2014 nothing else."
+      }
+    },
+    {
+      "kind": "text",
+      "data": {
+        "label": "decompose",
+        "text": "c1: Refund for ORD-123, which arrived damaged.\nc2: Investigate and refund the duplicate charge on ORD-456 (card charged twice).\nc3: Determine whether ORD-789 (shoes, delivered 40 days ago) is still within the return window.\nc4: Handle the customer's threat to file a chargeback if this isn't resolved today."
+      }
+    },
+    {
+      "kind": "result",
+      "data": {
+        "label": "decompose",
+        "subtype": "success",
+        "usage": {
+          "runs": 1,
+          "input_tokens": 2,
+          "output_tokens": 136,
+          "cache_read_tokens": 1824,
+          "cache_creation_tokens": 0,
+          "total_tokens": 1962,
+          "cost_usd": 0.0029
+        }
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "coordinator decomposition: ['c1', 'c2', 'c3', 'c4'] (4/4 ticket concerns)"
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "c1 -> ['order-investigator', 'refund-processor']  (Refund for ORD-123, which arrived damaged.)"
+      }
+    },
+    {
+      "kind": "prompt",
+      "data": {
+        "label": "c1/order-investigator",
+        "text": "Concern c1. Look up order ORD-123. Customer CUST-001 (Alice Chen), verified. Today 2026-09-07. The customer says: \"Refund for ORD-123, which arrived damaged.\". Report every field and whether the claim holds."
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "c1/order-investigator",
+        "name": "mcp__northwind__lookup_order",
+        "input": {
+          "order_id": "ORD-123"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "c1/order-investigator",
+        "content": "{\"order_id\": \"ORD-123\", \"customer_id\": \"CUST-001\", \"sku\": \"EL-4402\", \"amount\": 149.99, \"status\": \"delivered\", \"delivered_on\": \"2026-08-21\", \"condition\": \"damaged\", \"charges\": 1}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "c1/order-investigator",
+        "name": "mcp__northwind__lookup_order",
+        "input": {
+          "order_id": "ORD-123"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "c1/order-investigator",
+        "content": "{\"order_id\": \"ORD-123\", \"customer_id\": \"CUST-001\", \"sku\": \"EL-4402\", \"amount\": 149.99, \"status\": \"delivered\", \"delivered_on\": \"2026-08-21\", \"condition\": \"damaged\", \"charges\": 1}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "text",
+      "data": {
+        "label": "c1/order-investigator",
+        "text": "[\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"Order ORD-123 belongs to customer CUST-001, matching the verified customer Alice Chen.\",\n    \"evidence\": \"\\\"customer_id\\\": \\\"CUST-001\\\"\",\n    \"source\": \"lookup_order(ORD-123).customer_id\"\n  },\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"The order's SKU is EL-4402.\",\n    \"evidence\": \"\\\"sku\\\": \\\"EL-4402\\\"\",\n    \"source\": \"lookup_order(ORD-123).sku\"\n  },\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"The order amount is 149.99.\",\n    \"evidence\": \"\\\"amount\\\": 149.99\",\n    \"source\": \"lookup_order(ORD-123).amount\"\n  },\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"The order status is delivered.\",\n    \"evidence\": \"\\\"status\\\": \\\"delivered\\\"\",\n    \"source\": \"lookup_order(ORD-123).status\"\n  },\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"The order was delivered on 2026-08-21, 17 days before today (2026-09-07).\",\n    \"evidence\": \"\\\"delivered_on\\\": \\\"2026-08-21\\\"\",\n    \n\u2026 (+892 chars)"
+      }
+    },
+    {
+      "kind": "result",
+      "data": {
+        "label": "c1/order-investigator",
+        "subtype": "success",
+        "usage": {
+          "runs": 2,
+          "input_tokens": 8,
+          "output_tokens": 1072,
+          "cache_read_tokens": 15603,
+          "cache_creation_tokens": 209,
+          "total_tokens": 16892,
+          "cost_usd": 0.0169
+        }
+      }
+    },
+    {
+      "kind": "prompt",
+      "data": {
+        "label": "c1/refund-processor",
+        "text": "Concern c1. Issue a refund against order ORD-123 for 149.99. Reason: damaged. Customer CUST-001 (Alice Chen), verified. The order was investigated: [\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"Order ORD-123 belongs to customer CUST-001, matching the verified customer Alice Chen.\",\n    \"evidence\": \"\\\"customer_id\\\": \\\"CUST-001\\\"\",\n    \"source\": \"lookup_order(ORD-123).customer_id\"\n  },\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"The order's SKU is EL. Today 2026-09-07."
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "c1/refund-processor",
+        "name": "mcp__northwind__process_refund",
+        "input": {
+          "order_id": "ORD-123",
+          "amount": 149.99
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "c1/refund-processor",
+        "content": "{\"ok\": true, \"refunded\": 149.99, \"order_id\": \"ORD-123\"}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "text",
+      "data": {
+        "label": "c1/refund-processor",
+        "text": "[\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"Refund of 149.99 against order ORD-123 for verified customer CUST-001 (Alice Chen) was processed successfully.\",\n    \"evidence\": \"{\\\"ok\\\": true, \\\"refunded\\\": 149.99, \\\"order_id\\\": \\\"ORD-123\\\"}\",\n    \"source\": \"process_refund(ORD-123, 149.99)\"\n  }\n]"
+      }
+    },
+    {
+      "kind": "result",
+      "data": {
+        "label": "c1/refund-processor",
+        "subtype": "success",
+        "usage": {
+          "runs": 3,
+          "input_tokens": 12,
+          "output_tokens": 1389,
+          "cache_read_tokens": 21131,
+          "cache_creation_tokens": 2519,
+          "total_tokens": 25051,
+          "cost_usd": 0.0316
+        }
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "c2 -> ['order-investigator', 'refund-processor']  (Investigate and refund the duplicate charge on ORD-456 (card charged twice).)"
+      }
+    },
+    {
+      "kind": "prompt",
+      "data": {
+        "label": "c2/order-investigator",
+        "text": "Concern c2. Look up order ORD-456. Customer CUST-001 (Alice Chen), verified. Today 2026-09-07. The customer says: \"Investigate and refund the duplicate charge on ORD-456 (card charged twice).\". Report every field and whether the claim holds."
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "c2/order-investigator",
+        "name": "mcp__northwind__lookup_order",
+        "input": {
+          "order_id": "ORD-456"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "c2/order-investigator",
+        "content": "{\"ok\": false, \"errorCategory\": \"transient\", \"isRetryable\": true, \"message\": \"Order service timed out.\", \"attempted\": \"lookup_order(ORD-456)\", \"partialResults\": [{\"concern_id\": \"c2\", \"claim\": \"ORD-456 exists on this account.\", \"evidence\": \"order id resolved before the timeout\", \"source\": \"order index\"}], \"alternatives\": [\"retry lookup_order once\", \"proceed with the other concerns and flag c2 as unresolved\", \"escalate c2 to the billing team with what is known\"]}",
+        "is_error": true
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "c2/order-investigator",
+        "name": "mcp__northwind__lookup_order",
+        "input": {
+          "order_id": "ORD-456"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "c2/order-investigator",
+        "content": "{\"ok\": false, \"errorCategory\": \"transient\", \"isRetryable\": true, \"message\": \"Order service timed out.\", \"attempted\": \"lookup_order(ORD-456)\", \"partialResults\": [{\"concern_id\": \"c2\", \"claim\": \"ORD-456 exists on this account.\", \"evidence\": \"order id resolved before the timeout\", \"source\": \"order index\"}], \"alternatives\": [\"retry lookup_order once\", \"proceed with the other concerns and flag c2 as unresolved\", \"escalate c2 to the billing team with what is known\"]}",
+        "is_error": true
+      }
+    },
+    {
+      "kind": "text",
+      "data": {
+        "label": "c2/order-investigator",
+        "text": "[\n  {\n    \"concern_id\": \"c2\",\n    \"claim\": \"Could not investigate the alleged duplicate charge on ORD-456 because the order lookup failed and could not return status, delivered_on, amount, sku, condition, or charges.\",\n    \"evidence\": \"{\\\"ok\\\": false, \\\"errorCategory\\\": \\\"transient\\\", \\\"isRetryable\\\": true, \\\"message\\\": \\\"Order service timed out.\\\", \\\"attempted\\\": \\\"lookup_order(ORD-456)\\\"}\",\n    \"source\": \"lookup_order(ORD-456) \u2014 Order service timed out\"\n  }\n]"
+      }
+    },
+    {
+      "kind": "result",
+      "data": {
+        "label": "c2/order-investigator",
+        "subtype": "success",
+        "usage": {
+          "runs": 4,
+          "input_tokens": 18,
+          "output_tokens": 1776,
+          "cache_read_tokens": 33031,
+          "cache_creation_tokens": 4956,
+          "total_tokens": 39781,
+          "cost_usd": 0.0486
+        }
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "c2: investigation returned a transient failure \u2014 holding the refund, proceeding on the other concerns"
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "c3 -> ['policy-analyst']  (Determine whether ORD-789 (shoes, delivered 40 days ago) is still within the return window.)"
+      }
+    },
+    {
+      "kind": "prompt",
+      "data": {
+        "label": "c3/policy-analyst",
+        "text": "Concern c3. Question: Determine whether ORD-789 (shoes, delivered 40 days ago) is still within the return window. Facts: order ORD-789, item FW-2201 (footwear), delivered 2026-07-29, today 2026-09-07, condition unworn, amount 812.4. Cite the clause and answer."
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "c3/policy-analyst",
+        "name": "mcp__northwind__read_policy",
+        "input": {
+          "section": "2"
+        }
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "c3/policy-analyst",
+        "name": "mcp__northwind__read_policy",
+        "input": {
+          "section": "2.1"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "c3/policy-analyst",
+        "content": "{\"section\": \"2\", \"text\": null, \"found\": false, \"available_sections\": [\"2.1\", \"2.2\", \"2.3\", \"3.4\", \"3.5\", \"5.2\"]}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "c3/policy-analyst",
+        "content": "{\"section\": \"2.1\", \"text\": \"Standard return window: 30 calendar days from delivery date.\", \"found\": true}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "c3/policy-analyst",
+        "name": "mcp__northwind__read_policy",
+        "input": {
+          "section": "2.2"
+        }
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "c3/policy-analyst",
+        "name": "mcp__northwind__read_policy",
+        "input": {
+          "section": "2.3"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "c3/policy-analyst",
+        "content": "{\"section\": \"2.2\", \"text\": \"Footwear and apparel may be returned within 45 days if unworn with tags attached.\", \"found\": true}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "c3/policy-analyst",
+        "content": "{\"section\": \"2.3\", \"text\": \"Electronics return window: 14 days.\", \"found\": true}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "c3/policy-analyst",
+        "name": "mcp__northwind__read_policy",
+        "input": {
+          "section": "3.4"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "c3/policy-analyst",
+        "content": "{\"section\": \"3.4\", \"text\": \"Auto-escalate to Tier 2 if the customer mentions lawyer, BBB, chargeback, or social media.\", \"found\": true}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "c3/policy-analyst",
+        "name": "mcp__northwind__read_policy",
+        "input": {
+          "section": "3.5"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "c3/policy-analyst",
+        "content": "{\"section\": \"3.5\", \"text\": \"Refund requests over $500 require Tier 2 approval.\", \"found\": true}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "c3/policy-analyst",
+        "name": "mcp__northwind__read_policy",
+        "input": {
+          "section": "5.2"
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "c3/policy-analyst",
+        "content": "{\"section\": \"5.2\", \"text\": \"Duplicate charges: once a second charge for one order is confirmed, refund the extra charge to the original payment method. No further approval is needed below the section 3.5 ceiling.\", \"found\": true}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "text",
+      "data": {
+        "label": "c3/policy-analyst",
+        "text": "[\n  {\n    \"concern_id\": \"c3\",\n    \"claim\": \"ORD-789 (footwear FW-2201, unworn) is still within the return window because footwear gets 45 days and delivery was only 40 days ago.\",\n    \"evidence\": \"Footwear and apparel may be returned within 45 days if unworn with tags attached.\",\n    \"source\": \"policy 2.2\"\n  },\n  {\n    \"concern_id\": \"c3\",\n    \"claim\": \"The standard 30-day window would have excluded this return, but the footwear exception overrides it.\",\n    \"evidence\": \"Standard return window: 30 calendar days from delivery date.\",\n    \"source\": \"policy 2.1\"\n  },\n  {\n    \"concern_id\": \"c3\",\n    \"claim\": \"Delivered 2026-07-29 and today is 2026-09-07, which is 40 days elapsed, within the 45-day footwear window (5 days remaining).\",\n    \"evidence\": \"delivered 2026-07-29, today 2026-09-07, condition unworn\",\n    \"source\": \"facts provided in prompt\"\n  },\n  {\n    \"concern_id\": \"c3\",\n    \"claim\n\u2026 (+493 chars)"
+      }
+    },
+    {
+      "kind": "result",
+      "data": {
+        "label": "c3/policy-analyst",
+        "subtype": "success",
+        "usage": {
+          "runs": 5,
+          "input_tokens": 28,
+          "output_tokens": 2965,
+          "cache_read_tokens": 59320,
+          "cache_creation_tokens": 8227,
+          "total_tokens": 70540,
+          "cost_usd": 0.0799
+        }
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "c4 -> ['escalation-writer']  (Handle the customer's threat to file a chargeback if this isn't resolved today.)"
+      }
+    },
+    {
+      "kind": "prompt",
+      "data": {
+        "label": "c4/escalation-writer",
+        "text": "Concern c4. Handle the customer's threat to file a chargeback if this isn't resolved today. Customer CUST-001 (Alice Chen), email alice@example.com. root_cause: Handle the customer's threat to file a chargeback if this isn't resolved today. recommended_action: a human agent must review and respond today, per the escalation policy on chargeback threats (clause 3.4)."
+      }
+    },
+    {
+      "kind": "tool_use",
+      "data": {
+        "label": "c4/escalation-writer",
+        "name": "mcp__northwind__escalate_to_human",
+        "input": {
+          "customer_id": "CUST-001",
+          "root_cause": "Handle the customer's threat to file a chargeback if this isn't resolved today.",
+          "recommended_action": "A human agent must review and respond today, per the escalation policy on chargeback threats (clause 3.4)."
+        }
+      }
+    },
+    {
+      "kind": "tool_result",
+      "data": {
+        "label": "c4/escalation-writer",
+        "content": "{\"ok\": true, \"ticket\": \"ESC-9001\", \"customer_id\": \"CUST-001\", \"root_cause\": \"Handle the customer's threat to file a chargeback if this isn't resolved today.\", \"recommended_action\": \"A human agent must review and respond today, per the escalation policy on chargeback threats (clause 3.4).\"}",
+        "is_error": false
+      }
+    },
+    {
+      "kind": "text",
+      "data": {
+        "label": "c4/escalation-writer",
+        "text": "```json\n[\n  {\n    \"concern_id\": \"c4\",\n    \"claim\": \"Escalated the customer's chargeback threat to a human agent for same-day review and response.\",\n    \"evidence\": \"{\\\"ok\\\": true, \\\"ticket\\\": \\\"ESC-9001\\\", \\\"customer_id\\\": \\\"CUST-001\\\", \\\"root_cause\\\": \\\"Handle the customer's threat to file a chargeback if this isn't resolved today.\\\", \\\"recommended_action\\\": \\\"A human agent must review and respond today, per the escalation policy on chargeback threats (clause 3.4).\\\"}\",\n    \"source\": \"escalate_to_human(customer_id='CUST-001')\"\n  }\n]\n```"
+      }
+    },
+    {
+      "kind": "result",
+      "data": {
+        "label": "c4/escalation-writer",
+        "subtype": "success",
+        "usage": {
+          "runs": 6,
+          "input_tokens": 32,
+          "output_tokens": 3433,
+          "cache_read_tokens": 64857,
+          "cache_creation_tokens": 10532,
+          "total_tokens": 78854,
+          "cost_usd": 0.096
+        }
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "round 1: delegated ['c1', 'c2', 'c3', 'c4'] -> covered ['c1', 'c2', 'c3', 'c4'], gaps []"
+      }
+    },
+    {
+      "kind": "prompt",
+      "data": {
+        "label": "report",
+        "text": "Findings from the specialists:\n[\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"Order ORD-123 belongs to customer CUST-001, matching the verified customer Alice Chen.\",\n    \"evidence\": \"\\\"customer_id\\\": \\\"CUST-001\\\"\",\n    \"source\": \"lookup_order(ORD-123).customer_id\"\n  },\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"The order's SKU is EL-4402.\",\n    \"evidence\": \"\\\"sku\\\": \\\"EL-4402\\\"\",\n    \"source\": \"lookup_order(ORD-123).sku\"\n  },\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"The order amount is 149.99.\",\n    \"evidence\": \"\\\"amount\\\": 149.99\",\n    \"source\": \"lookup_order(ORD-123).amount\"\n  },\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"The order status is delivered.\",\n    \"evidence\": \"\\\"status\\\": \\\"delivered\\\"\",\n    \"source\": \"lookup_order(ORD-123).status\"\n  },\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"The order was delivered on 2026-08-21, 17 days before today (2026-09-07).\",\n    \"evidence\": \"\\\"delivered_on\\\": \\\"2026-08-21\\\"\",\n    \"source\": \"lookup_order(ORD-123).delivered_on\"\n  },\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"The order condition is recorded as damaged, supporting the customer's claim that it arrived damaged.\",\n    \"evidence\": \"\\\"condition\\\": \\\"damaged\\\"\",\n    \"source\": \"lookup_order(ORD-123).condition\"\n  },\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"The card was charged once, so a single refund of the full amount would be appropriate.\",\n    \"evidence\": \"\\\"charges\\\": 1\",\n    \"source\": \"lookup_order(ORD-123).charges\"\n  },\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"The customer's refund claim holds: the order is delivered, the condition field confirms damaged, the customer ID matches the verified customer, and there was exactly one charge.\",\n    \"evidence\": \"status=\\\"delivered\\\", condition=\\\"damaged\\\", customer_id=\\\"CUST-001\\\", charges=1, amount=149.99\",\n    \"source\": \"lookup_order(ORD-123)\"\n  },\n  {\n    \"concern_id\": \"c1\",\n    \"claim\": \"Refund of 149.99 against order ORD-123 for verified customer CUST-001 (Alice Chen) was processed successfully.\",\n    \"evidence\": \"{\\\"ok\\\": true, \\\"refunded\\\": 149.99, \\\"order_id\\\": \\\"ORD-123\\\"}\",\n    \"source\": \"process_refund(ORD-123, 149.99)\"\n  },\n  {\n    \"concern_id\": \"c2\",\n    \"claim\": \"ORD-456 exists on this account.\",\n    \"evidence\": \"order id resolved before the timeout\",\n    \"source\": \"order index\"\n  },\n  {\n    \"concern_id\": \"c2\",\n    \"claim\": \"Could not investigate the alleged duplicate charge on ORD-456 because the order lookup failed and could not return status, delivered_on, amount, sku, condition, or charges.\",\n    \"evidence\": \"{\\\"ok\\\": false, \\\"errorCategory\\\": \\\"transient\\\", \\\"isRetryable\\\": true, \\\"message\\\": \\\"Order service timed out.\\\", \\\"attempted\\\": \\\"lookup_order(ORD-456)\\\"}\",\n    \"source\": \"lookup_order(ORD-456) \\u2014 Order service timed out\"\n  },\n  {\n    \"concern_id\": \"c2\",\n    \"claim\": \"c2 left unresolved \\u2014 the ORD-456 lookup could not run\",\n    \"evidence\": \"[\",\n    \"source\": \"lookup_order(ORD-456) \\u2014 transient failure, retryable\"\n  },\n  {\n    \"concern_id\": \"c3\",\n    \"claim\": \"ORD-789 (footwear FW-2201, unworn) is still within the return window because footwear gets 45 days and delivery was only 40 days ago.\",\n    \"evidence\": \"Footwear and apparel may be returned within 45 days if unworn with tags attached.\",\n    \"source\": \"policy 2.2\"\n  },\n  {\n    \"concern_id\": \"c3\",\n    \"claim\": \"The standard 30-day window would have excluded this return, but the footwear exception overrides it.\",\n    \"evidence\": \"Standard return window: 30 calendar days from delivery date.\",\n    \"source\": \"policy 2.1\"\n  },\n  {\n    \"concern_id\": \"c3\",\n    \"claim\": \"Delivered 2026-07-29 and today is 2026-09-07, which is 40 days elapsed, within the 45-day footwear window (5 days remaining).\",\n    \"evidence\": \"delivered 2026-07-29, today 2026-09-07, condition unworn\",\n    \"source\": \"facts provided in prompt\"\n  },\n  {\n    \"concern_id\": \"c3\",\n    \"claim\": \"Caveat: 2.2 also requires tags attached; facts state condition is unworn but do not confirm tags, so agent must verify tags before approving.\",\n    \"evidence\": \"may be returned within 45 days if unworn with tags attached\",\n    \"source\": \"policy 2.2\"\n  },\n  {\n    \"concern_id\": \"c3\",\n    \"claim\": \"The refund amount of 812.4 exceeds $500, so it needs Tier 2 approval before processing.\",\n    \"evidence\": \"Refund requests over $500 require Tier 2 approval.\",\n    \"source\": \"policy 3.5\"\n  },\n  {\n    \"concern_id\": \"c4\",\n    \"claim\": \"Escalated the customer's chargeback threat to a human agent for same-day review and response.\",\n    \"evidence\": \"{\\\"ok\\\": true, \\\"ticket\\\": \\\"ESC-9001\\\", \\\"customer_id\\\": \\\"CUST-001\\\", \\\"root_cause\\\": \\\"Handle the customer's threat to file a chargeback if this isn't resolved today.\\\", \\\"recommended_action\\\": \\\"A human agent must review and respond today, per the escalation policy on chargeback threats (clause 3.4).\\\"}\",\n    \"source\": \"escalate_to_human(customer_id='CUST-001')\"\n  }\n]\n\nWrite the customer-facing reply now. Cover every concern c1, c2, c3, c4. For each: what was done, and the source behind it (a policy section, an order field value, or a ticket id) stated explicitly. Name any concern still unresolved and say why. Write from the findings above \u2014 do not invent anything."
+      }
+    },
+    {
+      "kind": "text",
+      "data": {
+        "label": "report",
+        "text": "Hello Alice,\n\nThank you for reaching out. Here is where each of your concerns stands.\n\n**1. ORD-123 \u2014 arrived damaged, refund requested**\nResolved. We confirmed the order is delivered (`status = \"delivered\"`), that its recorded condition is \"damaged\" (`lookup_order(ORD-123).condition = \"damaged\"`), that it belongs to your account (`customer_id = \"CUST-001\"`), delivered on 2026-08-21 (`delivered_on`), amount 149.99 (`amount`), and that the card was charged exactly once (`charges = 1`). We processed a full refund of $149.99 to your original payment method (`process_refund(ORD-123, 149.99)` returned `ok: true, refunded: 149.99`). Allow your bank a few business days to post it.\n\n**2. ORD-456 \u2014 possible duplicate charge**\nUnresolved. We were not able to investigate this. The order lookup timed out (`lookup_order(ORD-456)`: \"Order service timed out,\" a transient/retryable error), so we could n\n\u2026 (+1586 chars)"
+      }
+    },
+    {
+      "kind": "result",
+      "data": {
+        "label": "report",
+        "subtype": "success",
+        "usage": {
+          "runs": 7,
+          "input_tokens": 34,
+          "output_tokens": 4482,
+          "cache_read_tokens": 66037,
+          "cache_creation_tokens": 13199,
+          "total_tokens": 83752,
+          "cost_usd": 0.1202
+        }
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "unresolved after the fault: none"
+      }
+    },
+    {
+      "kind": "raw",
+      "data": {
+        "text": "## Report (note how c2 is named as unresolved)\n\nHello Alice,\n\nThank you for reaching out. Here is where each of your concerns stands.\n\n**1. ORD-123 \u2014 arrived damaged, refund requested**\nResolved. We confirmed the order is delivered (`status = \"delivered\"`), that its recorded condition is \"damaged\" (`lookup_order(ORD-123).condition = \"damaged\"`), that it belongs to your account (`customer_id = \"CUST-001\"`), delivered on 2026-08-21 (`delivered_on`), amount 149.99 (`amount`), and that the card was charged exactly once (`charges = 1`). We processed a full refund of $149.99 to your original payment method (`process_refund(ORD-123, 149.99)` returned `ok: true, refunded: 149.99`). Allow your bank a few business days to post it.\n\n**2. ORD-456 \u2014 possible duplicate charge**\nUnresolved. We were not able to investigate this. The order lookup timed out (`lookup_order(ORD-456)`: \"Order service timed out,\" a transient/retryable error), so we could not confirm the amount, the number of charges, or any other detail. Please give us a short while and contact us again, or reply to this message, so we can retry the lookup and check whether a duplicate charge actually occurred.\n\n**3. ORD-789 \u2014 footwear return**\nPartly resolved; action still pending. Standard returns are 30 days from delivery (policy 2.1), which alone would have closed this window. However, footwear may be returned within 45 days if unworn with tags attached (policy 2.2). ORD-789 was delivered 2026-07-29; as of today (2026-09-07) that is 40 days elapsed, leaving 5 days in the 45-day footwear window. Two things must still happen before we can issue this refund:\n- We need to confirm the tags are still attached. Our records show the item as unworn but do not confirm tags, and policy 2.2 requires both.\n- The refund amount of $812.40 exceeds $500, so it requires Tier 2 approval before it can be processed (policy 3.5).\nPlease confirm the tags are attached, and we will route the refund for Tier 2 approval.\n\n**4. Chargeback threat**\nEscalated. Your statement that you will file a chargeback if this is not resolved today has been sent to a human agent for same-day review and response, per the chargeback-threat escalation policy (clause 3.4). Your ticket number is **ESC-9001**. A human agent will review and respond today.\n\n**Summary of what still needs resolution:** the ORD-456 duplicate-charge question (blocked by a system timeout) and the ORD-789 refund (needs tag confirmation from you and Tier 2 approval).\n\nThank you for your patience,\nNorthwind Support"
+      }
+    },
+    {
+      "kind": "note",
+      "data": {
+        "text": "Access failure vs valid empty: the ORD-456 timeout is an ACCESS FAILURE (is_error, retryable \u2014 the query could not run). read_policy on a missing section returns found=false + the section index: a VALID EMPTY result, ran fine, returns the same nothing every time."
+      }
+    }
+  ]
+}

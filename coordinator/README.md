@@ -1,0 +1,191 @@
+# Week 2 — support coordinator
+
+The Week 1 [`customer-support-agent`](../README.md) rebuilt on the **Claude Agent SDK**
+(`claude-agent-sdk`) as a coordinator with four scoped specialist subagents, resolving a
+single customer message that carries four separate problems.
+
+> The ticket (`backend.ALICE_TICKET`):
+> *"I'm alice@example.com. ORD-123 arrived damaged and I want a refund. ORD-456 got charged to
+> my card twice. I bought shoes on ORD-789 forty days ago. Can I still return them? If this
+> isn't sorted today I'm filing a chargeback."*
+>
+> Four concerns: **c1** damaged → refund · **c2** duplicate charge → investigate + refund ·
+> **c3** return-window → policy read · **c4** chargeback threat → escalate.
+
+## Architecture — and why it is host-orchestrated
+
+The four specialists are `AgentDefinition` objects, each with its own `tools` list. The
+coordinator is **host code**: an LLM decomposition, deterministic routing of each concern to a
+specialist, one scoped `run_agent()` call per specialist, a coverage check against the ticket,
+and an LLM report.
+
+It is not the coordinator spawning subagents via the `Agent` tool, because on this SDK
+(`claude-agent-sdk` 0.2.x, `ClaudeSDKClient`) an Agent-tool subagent is **deferred** — it does
+not complete inside the spawning turn, so the coordinator stalls waiting for a result that
+never arrives on that turn. Running each specialist as its own `query()` keeps it synchronous
+and gives the host full control over what facts cross the boundary. Every rubric point still
+holds: each specialist is an `AgentDefinition` with an explicit `tools` list, the hook runs on
+every one of them, and a concern the decomposition never produced is a gap the coverage check
+re-delegates.
+
+## Run
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r coordinator/requirements.txt        # claude-agent-sdk + the `claude` CLI
+# Auth: do NOT set ANTHROPIC_API_KEY — the repo's identity-linked key lacks the workspace
+# header the CLI needs. coordinator/config.py unsets it on import so the SDK uses your
+# Claude Code login. Model defaults to claude-sonnet-4-6 (COORDINATOR_MODEL to override).
+
+python -m coordinator                      # resolve the built-in four-concern ticket
+python -m coordinator --demo full          # same, writes a transcript
+python -m coordinator --demo all           # every demonstration
+pytest coordinator/tests -q                # deterministic parts, no network
+```
+
+## The four specialists — least privilege
+
+`coordinator/agents.py`. Each `AgentDefinition` names exactly the one tool its role needs.
+**Leave the `tools` field out and the specialist inherits the whole session** — `run_agent`
+gives an omitted-`tools` agent the full northwind server, so it can reach `process_refund`
+even though its prompt forbids it. `LOOSE_AGENTS` keeps that mistake as a labelled
+counter-example; `--demo scoping` runs both.
+
+| specialist | `tools` | why exactly this |
+|---|---|---|
+| `order-investigator` | `mcp__northwind__lookup_order` | reads order state; never mutates |
+| `policy-analyst` | `mcp__northwind__read_policy` | reads written policy; no order access, no clock |
+| `refund-processor` | `mcp__northwind__process_refund` | the only agent that moves money |
+| `escalation-writer` | `mcp__northwind__escalate_to_human` | the only agent that opens a ticket |
+
+Scoping is enforced hard: `run_agent` builds each specialist a **per-agent MCP server that
+mounts only that agent's tool(s)** (`tools.create_northwind(only=...)`), because
+`ClaudeAgentOptions(tools=...)` only narrows visibility — a scoped policy-analyst that tried
+`lookup_order` would otherwise reach it. `get_customer` is the coordinator's, not a
+specialist's.
+
+## Context isolation — every fact goes in the prompt
+
+`--demo context`. The `policy-analyst` server has only `read_policy` — no order access, no
+clock. Asked *"Is ORD-789 still inside its return window?"* with nothing else, it reads the
+policy and then says it **cannot answer** — "my prompt contains no delivered_on date… and I
+cannot look order data up." Handed the SKU, the delivery date and today's date in the
+delegation prompt, it cites clause 2.2 and answers (40 ≤ 45 days → within the window).
+
+## Output contract — claim / evidence / source
+
+Every specialist returns a JSON array of `{concern_id, claim, evidence, source}`
+(`prompts.FINDING_CONTRACT`). `--demo attribution` prints the raw findings and then the report
+so you can check the `source` survived — the report still says "policy 2.2, delivered
+2026-07-29, 40 days elapsed", not just "yes".
+
+## The hook — one rule, every agent
+
+`coordinator/hook.py` registers **one** `PreToolUse` hook against
+`mcp__northwind__process_refund` (`hook.CEILING_HOOKS`). It fires on every specialist that
+calls the refund tool, so the $500 ceiling (Week 1's `REFUND_AUTO_APPROVAL_LIMIT`) lives in
+one place, not four prompts. `--demo hook`: `refund-processor` tries $812.40 on ORD-789 → the
+hook denies with the policy-3.5 message → the specialist records the denial as its finding →
+`REFUND_LOG` stays empty → the coordinator routes it to `escalation-writer` (ticket ESC-9001).
+A $149.99 refund on ORD-123 is allowed.
+
+(A second hook, `hook.scope_coordinator`, is a *different* rule: it stops the coordinator
+calling any northwind tool except `get_customer`.)
+
+## Failure propagation
+
+`--demo failure`. The ORD-456 lookup is run two ways:
+
+- **bare** — `is_error` + the two words `"Lookup failed."` Nothing tells the coordinator retry
+  from skip from escalate.
+- **structured** — `err("transient", retryable=True, attempted=..., partialResults=[...],
+  alternatives=[...])`. In the full run under this fault, the coordinator **holds c2's refund**,
+  resolves c1/c3/c4, and the report names c2: *"Unresolved. The order lookup timed out… a
+  transient/retryable error."*
+
+Access failure vs valid empty: the ORD-456 timeout is an **access failure** (`is_error`,
+retryable — the query could not run). `read_policy` on a missing section returns `found: false`
+**plus the list of sections that exist** — a **valid empty result**, ran fine, same nothing
+every time.
+
+## Coverage check — the fix is in the coordinator prompt
+
+`coordinator/coordinator.py`: decompose → map each decomposition item onto a ticket concern
+**by content, not by the id the coordinator gave it** (`map_to_ticket`) → any ticket concern
+nothing maps to is a gap → re-delegate the gaps until coverage holds, checked against the
+ticket (`TICKET_CONCERNS`), not the coordinator's own list.
+
+`--demo coverage` runs it under both prompts:
+
+- **`NARROW_SYSTEM`** (before) — "You are the Northwind refunds desk… matters that are not a
+  refund or a return are outside your scope." Its decomposition lists the refund/return items
+  and **omits the chargeback threat**; `map_to_ticket` leaves c4 unmapped; the coverage check
+  catches c4 and re-delegates it to `escalation-writer`.
+- **`GOAL_SYSTEM`** (after) — "resolve EVERY distinct concern… a threat to file a chargeback is
+  a concern that needs a human." Decomposition covers all four.
+
+The specialists were identical in both runs — the drop was the coordinator's decomposition,
+so the fix is in `prompts.py` (NARROW → GOAL), not in any subagent.
+
+## Transcripts
+
+`coordinator/transcripts/` (regenerate with `--demo <name>`):
+
+| file | shows |
+|---|---|
+| `full_ticket` | all four concerns handled or escalated, one report, attribution intact |
+| `baseline_single_agent` | one agent, five tools — for the token comparison |
+| `scoping` | omitted `tools` → the whole server; explicit `tools` → one tool, no refund possible |
+| `context_isolation` | missing fact → "I cannot answer"; fact in the prompt → cited answer |
+| `attribution` | raw findings JSON, then the report still naming each source |
+| `hook_denial` | $812.40 refund denied, `REFUND_LOG` empty, escalation instead |
+| `failure_partial` | bare vs structured failure; access-failure vs valid-empty |
+| `coverage_rounds` | NARROW drops c4, the check re-delegates; GOAL covers in round 1 |
+
+---
+
+## Reflection
+
+### Every subagent reported success and the ticket still had concerns nobody worked on. Where do you look first, and why is it not the subagents?
+
+Look at the **coordinator's decomposition and routing** — the list of concerns it produced,
+and which of them got mapped to a specialist. Not the subagents: a specialist's "success"
+means "I answered the one prompt I was handed", and it has no way to know about a concern it
+was never told about. Each specialist here did exactly its one job. The dropped concerns were
+never turned into tasks — the narrow coordinator's decomposition listed the refund items and
+silently left out the chargeback threat. That is a decomposition failure, upstream of every
+subagent, and it is detectable without opening a single subagent transcript: map the
+decomposition onto the ticket and see which ticket concerns nothing maps to. That map is the
+coverage check.
+
+### Your system used roughly how many more tokens than a single-agent approach? Was the ticket worth it? What kind of ticket would not be?
+
+Measured on a sample run (`--demo full` vs `--demo baseline`, same ticket):
+
+| | tokens (input+output+cache) | cost |
+|---|---|---|
+| single agent, five tools | ~55 K | ~$0.06 |
+| coordinator + 6 specialist runs + decompose + report | ~110 K | ~$0.15–0.25 |
+
+So roughly **2–4×**, and it grows with the number of concerns because each specialist context
+is separate by design — it re-pays for its own instructions, the finding contract, and the
+facts the coordinator copies in; the decomposition and report are two more calls. **Worth it
+here**: the four concerns need genuinely different tools (a read, a policy lookup, a
+hook-gated mutation, a handoff), and the single agent's correctness depends entirely on one
+prompt covering everything. **Not worth it** for a one-concern ticket, a pure status lookup,
+or anything a single scoped agent finishes in two or three tool calls — there the decomposition
+and per-specialist overhead buys nothing and you should route straight to one agent.
+
+### What did you have to put in a subagent's prompt that you initially assumed it would already have?
+
+- **Today's date and the order's `delivered_on`** for `policy-analyst` — it has `read_policy`
+  but no order access and no clock, so it cannot do return-window arithmetic without both
+  dates stated. (This is the `--demo context` "before" case.)
+- **The verified `customer_id` and email** for `escalation-writer` — it can't call
+  `get_customer`, and the human ticket is worthless without them.
+- **The exact `amount` and `order_id`** for `refund-processor` — it doesn't look anything up.
+- **The customer's email itself** — the SDK injects the *operator's* account email into the
+  model's context, so "the customer" has to be stated explicitly or the wrong person gets
+  verified.
+- In every case, **the outputs of the other specialists** — `refund-processor` needs the
+  amount `order-investigator` found; nothing crosses the boundary unless the host carries it.

@@ -1,0 +1,5 @@
+claude-agent-sdk>=0.2,<0.3
+anthropic>=1,<2
+python-dotenv>=1.0
+pytest>=8.0
+# also requires the `claude` CLI (Claude Code) on PATH — the SDK shells out to it
